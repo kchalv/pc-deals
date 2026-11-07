@@ -1,0 +1,116 @@
+{
+  "_help": "ΜΟΝΟ ελληνικά καταστήματα, τιμές με ΦΠΑ 24%. prebuilt = έτοιμα PC (κρατιούνται μόνο NVIDIA RTX desktop). targets = περιφερειακά (ποντίκι/πληκτρολόγιο/οθόνη). alerts = κανόνες για «ΕΞΑΙΡΕΤΙΚΗ» προσφορά + email. include/exclude = regex στο όνομα (πεζά).",
+  "stores": {
+    "plaisio":  {"label": "Plaisio",    "note": "σελίδες κατηγοριών · αστέρια & αριθμός κριτικών · παλιά τιμή"},
+    "eshop":    {"label": "e-shop.gr",  "note": "λίστα GAMER PC με «ελάχιστη τιμή 30 ημερών» και προτεινόμενη λιανική · αναζήτηση περιφερειακών"},
+    "egate":    {"label": "e-gate",     "note": "αναζήτηση gaming desktop (Actina, MSI, ASUS ROG, Lenovo Legion/LOQ, E-GATE builds) · τιμές προσφοράς"},
+    "msystems": {"label": "msystems",   "note": "αναζήτηση (λίγα έτοιμα PC: HP Omen κ.ά.)"},
+    "germanos": {"label": "Germanos",   "note": "μόνο περιφερειακά (δεν πουλάει gaming PC)"},
+    "praxi":    {"label": "Praxi",      "note": "Vengeance builds (1.400+ gaming desktops)· διαβάζονται με αναζητήσεις RTX 5070 Ti / 5080 / 5090 / 4090 / 9800X3D / 9850X3D"},
+    "import":   {"label": "Εισαγωγή από browser", "note": "τιμές που έστειλες με το bookmarklet από Skroutz / Κωτσόβολο / Public / BestPrice (ισχύουν 24 ώρες)"}
+  },
+  "prebuilt": {
+    "min_price": 600, "max_price": 15000,
+    "require": "desktop|gaming pc|\\bpc\\b|tower|υπολογιστ|e-gate|innovator|turbo-x|omen|legion|loq|predator|trident|infinite|aegis|codex|rog g\\d|vision|gamer",
+    "exclude": "laptop|notebook|φορητ|″|&#8243;|\\d\\d(\\.\\d)?\"|mini pc|\\bnuc\\b|barebone|κάρτα γραφικών|graphics card|\\bvga\\b|refurbished|μεταχειρισμ|ανακατασκευ|workstation.*rtx (a|\\d{4} ada)|all.in.one|\\baio\\b|monitor|οθόνη",
+    "target_gpus": ["5070 ti", "5080", "5090", "4090"],
+    "sources": [
+      {"store": "plaisio",  "kind": "plaisio",    "arg": "https://www.plaisio.gr/list/pc-perifereiaka/desktops/gaming-desktops"},
+      {"store": "eshop",    "kind": "eshop_list", "arg": "https://www.e-shop.gr/ypologistes-desktops-list?table=PER&category=%C5%D0%C9%D4%D1%C1%D0%C5%C6%C9%CF%C9+%D5%D0%CF%CB%CF%C3%C9%D3%D4%C5%D3&category2=GAMER"},
+      {"store": "egate",    "kind": "egate",      "arg": "gaming desktop pc rtx", "pages": 8},
+      {"store": "egate",    "kind": "egate",      "arg": "e-gate rtx", "pages": 3},
+      {"store": "egate",    "kind": "egate",      "arg": "pc rtx 5080", "pages": 2},
+      {"store": "egate",    "kind": "egate",      "arg": "pc rtx 5090", "pages": 2},
+      {"store": "msystems", "kind": "msystems",   "arg": "gaming desktop"},
+      {"store": "praxi",    "kind": "praxi",      "arg": "rtx 5090", "pages": 3},
+      {"store": "praxi",    "kind": "praxi",      "arg": "rtx 4090", "pages": 2},
+      {"store": "praxi",    "kind": "praxi",      "arg": "rtx 5080", "pages": 10},
+      {"store": "praxi",    "kind": "praxi",      "arg": "rtx 5070 ti", "pages": 10},
+      {"store": "praxi",    "kind": "praxi",      "arg": "9800x3d", "pages": 10},
+      {"store": "praxi",    "kind": "praxi",      "arg": "9850x3d", "pages": 5}
+    ]
+  },
+  "peripheral_categories": {
+    "plaisio": {
+      "monitor": "https://www.plaisio.gr/list/pc-perifereiaka/othones/oles-oi-othones",
+      "keyboard": "https://www.plaisio.gr/list/pc-perifereiaka/perifereiaka-pc/pliktrologia",
+      "mouse": "https://www.plaisio.gr/list/pc-perifereiaka/perifereiaka-pc/pontikia-mousepads"
+    }
+  },
+  "peripheral_search_stores": ["eshop", "germanos", "egate", "praxi"],
+  "global_exclude": [
+    "skates|glides|grip tape|\\btape\\b|skin\\b|sticker|decal|θήκη|case\\b",
+    "switch set|switches|keycap|wrist|coiled|paracord|cable\\b|καλώδιο|dongle|receiver|replacement|feet\\b|charging|dock\\b",
+    "mousepad|mouse pad|monitor arm|βάση οθόνης|vesa|stand\\b",
+    "refurbished|μεταχειρισμ|open box|demo\\b"
+  ],
+  "categories": {
+    "monitor":  {"label": "Οθόνη", "min_price": 200, "max_price": 1500},
+    "keyboard": {"label": "Πληκτρολόγιο", "min_price": 90, "max_price": 500},
+    "mouse":    {"label": "Ποντίκι", "min_price": 50, "max_price": 250}
+  },
+  "alerts": {
+    "_help": "ΕΞΑΙΡΕΤΙΚΗ = τουλάχιστον ένας κανόνας (και διαθέσιμο). Το email φεύγει μία φορά ανά προϊόν, ξανά μόνο αν πέσει ≥2% ακόμα.",
+    "min_history_days": 4,
+    "drop_vs_median30": 0.10,
+    "below_alltime_low": 0.06,
+    "verified_store_discount": 0.20,
+    "prebuilt_min_score": 55,
+    "prebuilt_target_max_price": {"5070 ti": 2799, "5080": 3399, "4090": 4499, "5090": 5499},
+    "peripheral_below_ref": 0.12
+  },
+  "black_friday": {"date": "2026-11-27", "start": "2026-11-16", "end": "2026-12-01", "label": "Παρ. 27/11, Cyber Monday 30/11"},
+  "targets": [
+    {"key": "aw2725df", "cat": "monitor", "label": "Alienware AW2725DF · 27'' 1440p 360 Hz QD-OLED", "q": "AW2725DF", "include": ["aw2725df"],
+     "review": "Κορυφαία επιλογή για competitive: 360 Hz, QD-OLED, πολύ χαμηλό input lag. Πωλείται κυρίως από Dell.gr.",
+     "links": {"RTINGS review": "https://www.rtings.com/monitor/reviews/dell/alienware-aw2725df", "Dell.gr": "https://www.dell.com/el-gr/search/aw2725df"}},
+    {"key": "pg27aqdp", "cat": "monitor", "label": "ASUS ROG Swift PG27AQDP · 27'' 1440p 480 Hz WOLED (+ νεότερο PG27AQWP)", "q": "PG27AQDP", "include": ["pg27aq(dp|wp)"],
+     "tags": {"PG27AQWP (νεότερο)": "pg27aqwp"},
+     "review": "480 Hz OLED: η πιο γρήγορη 1440p της γενιάς της, ακριβή. Το PG27AQWP είναι ο διάδοχος.",
+     "links": {"RTINGS review": "https://www.rtings.com/monitor/reviews/asus/rog-swift-oled-pg27aqdp"}},
+    {"key": "lg27gx790a", "cat": "monitor", "label": "LG UltraGear 27GX790A-B · 27'' 1440p 480 Hz OLED", "q": "27GX790A", "include": ["27gx790"],
+     "ref_price": 643, "review": "480 Hz OLED σε χαμηλότερη τιμή από το ASUS. Πολύ καλή επιλογή τιμής/απόδοσης στα 480 Hz.",
+     "links": {"RTINGS": "https://www.rtings.com/search?q=27GX790A"}},
+    {"key": "lg27gr83q", "cat": "monitor", "label": "LG UltraGear 27GR83Q-B · 27'' 1440p 240 Hz IPS (value)", "q": "27GR83Q", "include": ["27gr83q"],
+     "review": "Φθηνή IPS 240 Hz. Χωρίς burn-in, αλλά πιο αργή από OLED. Η AOC Q27G42ZE που έχεις είναι ήδη στην ίδια κατηγορία.",
+     "links": {"RTINGS": "https://www.rtings.com/search?q=27GR83Q"}},
+    {"key": "wooting", "cat": "keyboard", "label": "Wooting 60HE+ / 80HE", "q": "Wooting", "include": ["wooting", "(60he|80he)"],
+     "exclude": ["keycap|module|switch|lekker|cable"],
+     "review": "Το σημείο αναφοράς για rapid trigger (Hall effect). Πωλείται κυρίως απευθείας από wooting.io (στέλνει Ελλάδα).",
+     "links": {"wooting.io 80HE": "https://wooting.io/wooting-80he", "wooting.io 60HE+": "https://wooting.io/wooting-60he"}},
+    {"key": "apex_pro_tkl3", "cat": "keyboard", "label": "SteelSeries Apex Pro TKL Gen 3", "q": "SteelSeries Apex Pro TKL Gen 3", "include": ["apex pro", "tkl"],
+     "exclude": ["gen 2|\\b2023\\b|mini"], "ref_price": 232,
+     "review": "Rapid trigger με OmniPoint 3.0, πολύ καλό software. Διαθέσιμο εύκολα στην Ελλάδα.",
+     "links": {"RTINGS": "https://www.rtings.com/search?q=Apex%20Pro%20TKL%20Gen%203"}},
+    {"key": "viper_v3_pro", "cat": "mouse", "label": "Razer Viper V3 Pro (54 g)", "q": "Razer Viper V3 Pro", "include": ["viper v3 pro"],
+     "exclude": ["dongle|grip|tape|skin|feet|dock"], "ref_price": 114,
+     "review": "Το πιο διαδεδομένο ποντίκι στους pros. 54 g, 8 kHz polling. Η έκδοση SE είναι ίδια σε άλλο χρώμα.",
+     "links": {"RTINGS review": "https://www.rtings.com/mouse/reviews/razer/viper-v3-pro"}},
+    {"key": "superlight2", "cat": "mouse", "label": "Logitech G Pro X Superlight 2 (60 g, DEX / SE)", "q": "Logitech G Pro X Superlight 2", "include": ["superlight 2"],
+     "exclude": ["dongle|grip|tape|skin|feet|dock|headset"], "ref_price": 102,
+     "review": "Ελαφρύ, αξιόπιστο, μεγάλη αυτονομία. Το DEX έχει ασύμμετρο σχήμα. Το SE είναι φθηνότερη έκδοση.",
+     "links": {"RTINGS review": "https://www.rtings.com/mouse/reviews/logitech/g-pro-x-superlight-2"}}
+  ],
+  "advice": [
+    "Fortnite competitive είναι CPU-bound: ο Ryzen 7 9800X3D (ή 9850X3D/9950X3D) δίνει τα περισσότερα fps. Πάνω από RTX 5070 Ti η κάρτα προσθέτει λίγα fps σε competitive ρυθμίσεις.",
+    "CUDA / local LLM: χρειάζεται NVIDIA και μετράει πρώτα η VRAM. 12 GB = μόνο μικρά μοντέλα. 16 GB (5070 Ti / 5080) = μοντέλα 7–14B άνετα, έως ~20–24B σε 4-bit. 24 GB (4090) = έως ~32B σε 4-bit. 32 GB (5090) = 32B με μεγάλο context ή καλύτερη ποιότητα· 70B μόνο με offload στη RAM.",
+    "AI agents / development: 64 GB RAM βοηθά σε offload μοντέλων, Docker και πολλά εργαλεία μαζί. Τα έτοιμα PC έχουν συνήθως 32 GB· ρώτα το κατάστημα για αναβάθμιση ή πρόσθεσε 2×32 GB μετά.",
+    "Ιδανικό: 9800X3D + RTX 5070 Ti 16 GB (value) ή RTX 5090 32 GB (high-end LLM). Η RTX 5080 έχει ίδια VRAM με την 5070 Ti, άρα για LLM δεν αξίζει τη διαφορά.",
+    "Η σελίδα ελέγχει αν μια «έκπτωση» είναι αληθινή: συγκρίνει με το δικό μας ιστορικό 30 ημερών και με την «ελάχιστη τιμή 30 ημερών» που υποχρεούνται να δείχνουν τα καταστήματα (οδηγία Omnibus).",
+    "Black Friday: περιφερειακά και οθόνες πέφτουν πραγματικά. Τα έτοιμα PC συχνά έχουν «φουσκωμένη» αρχική τιμή, γι' αυτό κοίτα το badge «ψεύτικη έκπτωση» και το 30ήμερο χαμηλό.",
+    "ΦΠΑ: ως επιχείρηση εκπίπτεις τον 24%· η σελίδα δείχνει και την τιμή χωρίς ΦΠΑ."
+  ],
+  "manual_links": [
+    {"label": "Skroutz: gaming PC RTX 5070 Ti", "url": "https://www.skroutz.gr/search?keyphrase=gaming+pc+rtx+5070+ti", "note": "μεγαλύτερη σύγκριση τιμών· κάθε προϊόν έχει γράφημα ιστορικού τιμής και κριτικές. Πάτα το bookmarklet για εισαγωγή."},
+    {"label": "Skroutz: gaming PC 9800X3D", "url": "https://www.skroutz.gr/search?keyphrase=gaming+pc+9800x3d", "note": ""},
+    {"label": "Skroutz: gaming PC RTX 5090", "url": "https://www.skroutz.gr/search?keyphrase=gaming+pc+rtx+5090", "note": ""},
+    {"label": "BestPrice: gaming PC", "url": "https://www.bestprice.gr/search?q=gaming+pc+rtx", "note": "έχει ιστορικό τιμής ανά προϊόν"},
+    {"label": "Κωτσόβολος: gaming PC", "url": "https://www.kotsovolos.gr/search?q=gaming%20pc", "note": "JavaScript site· χειροκίνητα ή bookmarklet"},
+    {"label": "Public: gaming PC", "url": "https://www.public.gr/search?text=gaming%20pc", "note": "JavaScript site (και MediaMarkt.gr ανακατευθύνει εδώ)"},
+    {"label": "You.gr: gaming PC", "url": "https://www.you.gr/search?q=gaming%20pc", "note": "μπλοκάρει αυτόματη ανάγνωση"},
+    {"label": "Cosmodata: Desktop PC", "url": "https://www.cosmodata.gr/category/3009/desktop-pc/", "note": "Expert PC builds"},
+    {"label": "Plaisio Black Friday", "url": "https://www.plaisio.gr/black-friday", "note": "σελίδα Black Friday (JavaScript)"},
+    {"label": "Germanos Black Friday", "url": "https://www.germanos.gr/black-friday", "note": ""},
+    {"label": "e-gate Προσφορές", "url": "https://www.e-gate.gr/prosfores", "note": ""}
+  ]
+}

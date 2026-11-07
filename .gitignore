@@ -1,0 +1,10 @@
+# ιδιωτικά / τοπικά: ΠΟΤΕ στο GitHub
+notify.json
+publish.json
+*.sqlite
+reports/
+logs/
+site/
+public/
+__pycache__/
+.claude/

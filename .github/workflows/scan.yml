@@ -1,0 +1,74 @@
+# Σάρωση κάθε ώρα στο GitHub: τιμές από ελληνικά καταστήματα -> email για εξαιρετικές προσφορές -> GitHub Pages.
+# Το ιστορικό τιμών (history.sqlite) κρατιέται στο branch "data" (ένα commit, αντικαθίσταται κάθε φορά).
+# Ρυθμίσεις email: secret NOTIFY_JSON (ίδιο περιεχόμενο με το τοπικό notify.json).
+name: scan
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+    inputs:
+      email:
+        description: "Αποστολή email για εξαιρετικές προσφορές"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: scan
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install requests
+
+      - name: Ιστορικό τιμών από το branch data
+        run: |
+          if git fetch -q origin data; then
+            git show origin/data:history.sqlite > history.sqlite
+            echo "ιστορικό: $(stat -c %s history.sqlite) bytes"
+          else
+            echo "δεν υπάρχει ακόμα branch data – νέο ιστορικό"
+          fi
+
+      - name: Σάρωση
+        env:
+          PC_DEALS_NOTIFY: ${{ secrets.NOTIFY_JSON }}
+          TZ: Europe/Athens
+        run: |
+          EXTRA=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.email }}" != "true" ]; then EXTRA="--no-email"; fi
+          python pc_deals.py --no-publish --public-out public/index.html $EXTRA
+          touch public/.nojekyll
+
+      - name: Αποθήκευση ιστορικού στο branch data
+        run: |
+          mkdir -p /tmp/data && cp history.sqlite /tmp/data/
+          cd /tmp/data
+          git init -q -b data
+          git add history.sqlite
+          git -c user.name="pc-deals bot" -c user.email="bot@users.noreply.github.com" commit -q -m "history $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" data
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
