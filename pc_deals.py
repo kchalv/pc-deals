@@ -714,7 +714,7 @@ def fmt(n):
 def notify_cfg():
     """notify.json ή (στο GitHub Actions) η μεταβλητή PC_DEALS_NOTIFY με το ίδιο JSON, από secret."""
     if os.environ.get("PC_DEALS_NOTIFY"):
-        cfg = json.loads(os.environ["PC_DEALS_NOTIFY"])
+        cfg = json.loads(os.environ["PC_DEALS_NOTIFY"].lstrip("﻿"))
     elif NOTIFY.exists():
         cfg = json.loads(NOTIFY.read_text(encoding="utf-8"))
     else:
