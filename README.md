@@ -2,8 +2,14 @@
 
 Σελίδα: **http://127.0.0.1:8765/** (κουμπί «↻ Ανανέωση τιμών»). Σάρωση κάθε ώρα και email για εξαιρετικές προσφορές.
 
-Online αντίγραφο: **https://kchalv.github.io/pc-deals/** (GitHub Pages, repo `kchalv/pc-deals`). Ανεβαίνει αυτόματα μετά από
-κάθε σάρωση από τον φάκελο `site/` (ρύθμιση `publish.json`, `--no-publish` για παράλειψη). Ανεβαίνει μόνο η σελίδα, χωρίς emails.
+## Online (GitHub Actions + Pages)
+
+- Σελίδα: **https://kchalv.github.io/pc-deals/**, repo `kchalv/pc-deals` (δημόσιο).
+- Το `.github/workflows/scan.yml` τρέχει τη σάρωση **κάθε ώρα στο GitHub**, στέλνει τα email και ανεβάζει τη σελίδα. Δεν χρειάζεται ανοιχτός υπολογιστής.
+- Ρυθμίσεις email: secret `NOTIFY_JSON` (ίδιο με το `notify.json`, που δεν ανεβαίνει). Το ιστορικό τιμών μένει στο branch `data`.
+- Χειροκίνητα: Actions → scan → Run workflow (επιλογές: email, δοκιμαστικό email).
+- Τοπικά: το task «PC Deals Hourly» είναι **απενεργοποιημένο**, για να μη στέλνονται διπλά email. Το κουμπί ανανέωσης στο 127.0.0.1 σαρώνει χωρίς email.
+- Αν αλλάξεις τον κωδικό του email: ενημέρωσε το `notify.json` και ξαναβάλε το secret (`gh secret set NOTIFY_JSON`).
 
 ## Τι κάνει
 
