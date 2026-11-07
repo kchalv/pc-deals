@@ -12,6 +12,10 @@ on:
         description: "Αποστολή email για εξαιρετικές προσφορές"
         type: boolean
         default: true
+      test_email:
+        description: "Μόνο δοκιμαστικό email (χωρίς σάρωση)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -23,7 +27,18 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  test-email:
+    if: ${{ inputs.test_email }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install requests
+      - env:
+          PC_DEALS_NOTIFY: ${{ secrets.NOTIFY_JSON }}
+        run: python3 pc_deals.py --test-email
+
   scan:
+    if: ${{ !inputs.test_email }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     environment:
