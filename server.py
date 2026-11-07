@@ -57,7 +57,8 @@ def run_scan(extra=()):
         return False
     LOGS.mkdir(exist_ok=True)
     log = LOGS / f"manual_{dt.date.today():%Y-%m-%d}.log"
-    subprocess.Popen([str(PYTHON), str(BASE / "pc_deals.py"), "--log", str(log), *extra], cwd=BASE,
+    # email και online σελίδα τα αναλαμβάνει πλέον η ωριαία σάρωση στο GitHub Actions
+    subprocess.Popen([str(PYTHON), str(BASE / "pc_deals.py"), "--log", str(log), "--no-email", "--no-publish", *extra], cwd=BASE,
                      creationflags=NO_WINDOW, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return True
 

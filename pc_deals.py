@@ -723,6 +723,11 @@ def notify_cfg():
     return cfg
 
 
+def shown_addr(cfg):
+    """Στο GitHub Actions τα logs είναι δημόσια: δεν τυπώνουμε τη διεύθυνση."""
+    return "(παραλήπτης από secret)" if os.environ.get("GITHUB_ACTIONS") else cfg["to"]
+
+
 def email_ready(cfg):
     return bool(cfg.get("enabled") and cfg.get("to") and cfg.get("smtp_host") and cfg.get("smtp_password"))
 
@@ -777,7 +782,7 @@ def email_alerts(con, offers, wl):
     for o in fresh:
         con.execute("insert or replace into alerts values(?,?,?)", (o["key"], o["price"], now))
     con.commit()
-    log(f"Email: στάλθηκε για {len(fresh)} προσφορές -> {cfg['to']}")
+    log(f"Email: στάλθηκε για {len(fresh)} προσφορές -> {shown_addr(cfg)}")
     return f"email στάλθηκε για {len(fresh)} προσφορές"
 
 
@@ -1160,7 +1165,7 @@ def main():
             log("Το notify.json δεν είναι πλήρες (enabled / to / smtp_host / smtp_password ή PC_DEALS_SMTP_PASSWORD).")
             sys.exit(1)
         send_email(cfg, "PC deals: δοκιμαστικό email", "<p>Το email ειδοποιήσεων για εξαιρετικές προσφορές λειτουργεί.</p>")
-        log(f"Στάλθηκε δοκιμαστικό email στο {cfg['to']}.")
+        log(f"Στάλθηκε δοκιμαστικό email στο {shown_addr(cfg)}.")
         return
 
     wl = json.loads(WATCHLIST.read_text(encoding="utf-8"))
