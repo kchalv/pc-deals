@@ -10,6 +10,7 @@
 - Χειροκίνητα: Actions → scan → Run workflow (επιλογές: email, δοκιμαστικό email).
 - Κάθε push στο `main` που αλλάζει `pc_deals.py` / `watchlist.json` / το workflow κάνει αμέσως σάρωση και deploy (χωρίς email).
 - Τοπικά: το task «PC Deals Hourly» είναι **απενεργοποιημένο**, για να μη στέλνονται διπλά email. Το κουμπί ανανέωσης στο 127.0.0.1 σαρώνει χωρίς email.
+- **Plaisio, U-Case, Κωτσόβολος** απαντούν 403 στους servers του GitHub. Τα σαρώνει ο υπολογιστής σου (task **PC Deals Relay**, κάθε 2 ώρες στο :05, `pythonw pc_deals.py --relay`) και ανεβάζει μόνο τα προϊόντα στο branch `relay`. Το GitHub τα ενσωματώνει αν είναι νεότερα από 5 ώρες (`watchlist.json` → `relay`). Email στέλνει **μόνο** το GitHub. Αν ο υπολογιστής είναι κλειστός, η σελίδα απλώς δεν έχει αυτά τα 3 καταστήματα.
 - Αν αλλάξεις τον κωδικό του email: ενημέρωσε το `notify.json` και ξαναβάλε το secret (`gh secret set NOTIFY_JSON`).
 
 ## Τι κάνει
@@ -120,6 +121,13 @@ python server.py                 # η σελίδα στο http://127.0.0.1:8765/
 ```
 
 ## Χρονοπρογραμματισμός
+
+- Task Scheduler **PC Deals Relay** (εγκατάσταση: `powershell -ExecutionPolicy Bypass -File install_relay_task.ps1`): κάθε 2 ώρες στο :05, `pythonw pc_deals.py --relay --log logselay.log`. Σαρώνει μόνο Plaisio / U-Case / Κωτσόβολο και κάνει push στο branch `relay`. Δεν στέλνει email.
+
+```
+schtasks /run /tn "PC Deals Relay"
+schtasks /delete /tn "PC Deals Relay" /f
+```
 
 - Task Scheduler **PC Deals Hourly**: κάθε ώρα, `pythonw pc_deals.py --log logs\hourly.log` (χωρίς παράθυρο).
 - Ο server πρέπει να τρέχει για το κουμπί ανανέωσης. Για αυτόματη εκκίνηση στο login, βάλε συντόμευση στον φάκελο Startup:

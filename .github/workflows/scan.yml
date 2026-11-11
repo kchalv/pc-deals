@@ -65,6 +65,14 @@ jobs:
             echo "δεν υπάρχει ακόμα branch data – νέο ιστορικό"
           fi
 
+      - name: Relay (Plaisio / U-Case / Κωτσόβολος από τον τοπικό υπολογιστή)
+        run: |
+          if git fetch -q origin relay; then
+            git show origin/relay:relay.json > relay.json && echo "relay: $(stat -c %s relay.json) bytes"
+          else
+            echo "δεν υπάρχει branch relay"
+          fi
+
       - name: Σάρωση
         env:
           PC_DEALS_NOTIFY: ${{ secrets.NOTIFY_JSON }}
@@ -73,6 +81,7 @@ jobs:
           EXTRA=""
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.email }}" != "true" ]; then EXTRA="--no-email"; fi
           if [ "${{ github.event_name }}" = "push" ]; then EXTRA="--no-email"; fi
+          if [ -f relay.json ]; then EXTRA="$EXTRA --relay-in relay.json"; fi
           python pc_deals.py --no-publish --public-out public/index.html $EXTRA
           touch public/.nojekyll
 

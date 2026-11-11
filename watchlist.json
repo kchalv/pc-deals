@@ -61,6 +61,11 @@
     }
   },
   "peripheral_search_stores": ["eshop", "germanos", "egate", "praxi", "ucase", "tetrabyte", "iabox", "mgmanager", "kpl", "kotsovolos"],
+  "relay": {
+    "_help": "Καταστήματα που απαντούν 403 στους servers του GitHub: τα σαρώνει ο τοπικός υπολογιστής (pc_deals.py --relay, Task Scheduler κάθε 2 ώρες) και το GitHub τα ενσωματώνει αν είναι νεότερα από max_age_h ώρες.",
+    "stores": ["plaisio", "ucase", "kotsovolos"],
+    "max_age_h": 5
+  },
   "global_exclude": [
     "skates|glides|grip tape|\\btape\\b|skin\\b|sticker|decal|θήκη|case\\b",
     "switch set|switches|keycap|wrist|coiled|paracord|cable\\b|καλώδιο|dongle|receiver|replacement|feet\\b|charging|dock\\b",

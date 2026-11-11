@@ -29,6 +29,7 @@ import html
 import json
 import os
 import re
+import shutil
 import smtplib
 import sqlite3
 import statistics
@@ -761,27 +762,117 @@ def tags_of(target, name):
 
 
 # ============================================================================ συλλογή
-def collect(wl):
+ONLY_STORES = None    # relay: σάρωσε μόνο αυτά τα καταστήματα
+SKIP_STORES = set()   # GitHub: αυτά ήρθαν από τον τοπικό υπολογιστή (relay) – μην τα ξαναζητάς
+
+
+def want(store):
+    return (ONLY_STORES is None or store in ONLY_STORES) and store not in SKIP_STORES
+
+
+def fetch_raw(wl):
+    """Ακατέργαστα προϊόντα: (PC, περιφερειακά). Τα περιφερειακά σημειώνονται με _cat (κατηγορία Plaisio) ή _t (στόχος)."""
     pre = wl["prebuilt"]
-    raw = []
-    # --- έτοιμα PC
+    pc_raw, per_raw = [], []
     log("Έτοιμα PC:")
     for src in pre["sources"]:
         st, kind, arg = src["store"], src["kind"], src["arg"]
+        if not want(st):
+            continue
         log(f"  {st:9s} {kind:9s} {arg[:70]}")
         if kind == "plaisio":
-            raw += plaisio_category(arg)
+            pc_raw += plaisio_category(arg)
         elif kind == "eshop_list":
-            raw += eshop_list(arg)
+            pc_raw += eshop_list(arg)
         elif kind == "msystems":
-            raw += msystems_search(arg)
+            pc_raw += msystems_search(arg)
         elif kind in PC_SOURCES:
-            raw += PC_SOURCES[kind](arg, max_pages=src.get("pages", 1))
+            pc_raw += PC_SOURCES[kind](arg, max_pages=src.get("pages", 1))
+    log("Περιφερειακά (λήψη):")
+    if want("plaisio"):
+        for cat_key, url in wl["peripheral_categories"]["plaisio"].items():
+            log(f"  plaisio   {cat_key}")
+            per_raw += [dict(o, _cat=cat_key) for o in plaisio_category(url)]
+    for t in wl["targets"]:
+        for sk in wl["peripheral_search_stores"]:
+            if want(sk):
+                per_raw += [dict(o, _t=t["key"]) for o in SEARCHERS[sk](t.get("q_" + sk) or t["q"])]
+    return pc_raw, per_raw
+
+
+RELAY_FILE = REPORTS / "relay.json"
+
+
+def load_relay(path, wl):
+    """Προϊόντα που σάρωσε ο τοπικός υπολογιστής (καταστήματα που μπλοκάρουν το GitHub). None αν λείπει/είναι παλιό."""
+    try:
+        d = json.loads(Path(path).read_text(encoding="utf-8"))
+        age_h = (dt.datetime.now(dt.timezone.utc) - dt.datetime.fromisoformat(d["ts"])).total_seconds() / 3600
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    max_age = wl.get("relay", {}).get("max_age_h", 5)
+    if age_h > max_age:
+        log(f"relay: παλιό ({age_h:.1f} ώρες > {max_age}) – αγνοείται")
+        return None
+    log(f"relay: {', '.join(d['stores'])} από τον τοπικό υπολογιστή ({age_h:.1f} ώρες πριν, "
+        f"{len(d['pc'])} PC / {len(d['per'])} περιφερειακά)")
+    return d
+
+
+def collect(wl, relay=None):
+    pc_raw, per_raw, relay_log = [], [], []
+    if relay:
+        SKIP_STORES.update(relay["stores"])
+        pc_raw += relay["pc"]
+        per_raw += relay["per"]
+        relay_log = [(f["store"], f["url"], f["code"], f["n"], "από τον τοπικό υπολογιστή " + f.get("note", "")) for f in relay["fetch"]]
+    a, b = fetch_raw(wl)
+    pc_raw += a
+    per_raw += b
+    FETCH_LOG.extend(relay_log)
     imp = load_imports()
     if imp:
         log(f"  import    {len(imp)} τιμές από τον browser (bookmarklet)")
-    raw += imp
-    return classify(wl, raw, fetch_peripherals=True)
+    return classify(wl, pc_raw + imp, per_raw)
+
+
+def relay_scan(wl, push=True):
+    """Τοπική σάρωση ΜΟΝΟ των καταστημάτων που μπλοκάρουν το GitHub -> reports/relay.json -> branch 'relay'."""
+    global ONLY_STORES
+    ONLY_STORES = set(wl.get("relay", {}).get("stores", []))
+    pc_raw, per_raw = fetch_raw(wl)
+    ok = sorted({s for s, _, c, n, _ in FETCH_LOG if c == 200 and n} & ONLY_STORES)
+    pc_raw = [o for o in pc_raw if o["store"] in ok]
+    per_raw = [o for o in per_raw if o["store"] in ok]
+    data = {"ts": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "stores": ok, "pc": pc_raw, "per": per_raw,
+            "fetch": [{"store": s, "url": u, "code": c, "n": n, "note": note} for s, u, c, n, note in FETCH_LOG if s in ok]}
+    REPORTS.mkdir(exist_ok=True)
+    RELAY_FILE.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    log(f"relay: {', '.join(ok) or 'κανένα κατάστημα'} – {len(pc_raw)} PC, {len(per_raw)} περιφερειακά -> {RELAY_FILE}")
+    if push and ok:
+        relay_push()
+
+
+def relay_push():
+    """Ανεβάζει ΜΟΝΟ το relay.json σε ξεχωριστό branch 'relay' (force, χωρίς ιστορικό)."""
+    git_exe = GIT_EXE if Path(GIT_EXE).exists() else (shutil.which("git") or "git")
+    run = lambda *a, cwd: subprocess.run([git_exe, *a], cwd=cwd, capture_output=True, text=True, encoding="utf-8",  # noqa: E731
+                                         errors="replace", timeout=120, creationflags=0x08000000 if os.name == "nt" else 0)
+    remote = run("remote", "get-url", "origin", cwd=BASE).stdout.strip()
+    if not remote:
+        log("relay: δεν βρέθηκε git remote 'origin'")
+        return
+    d = REPORTS / "relay_git"
+    if d.exists():
+        shutil.rmtree(d, ignore_errors=True)
+    d.mkdir(parents=True)
+    shutil.copy(RELAY_FILE, d / "relay.json")
+    run("init", "-q", "-b", "relay", cwd=d)
+    run("add", "relay.json", cwd=d)
+    run("-c", "user.name=pc-deals relay", "-c", "user.email=relay@users.noreply.github.com",
+        "commit", "-q", "-m", f"relay {dt.datetime.now():%Y-%m-%d %H:%M}", cwd=d)
+    r = run("push", "-q", "-f", remote, "relay", cwd=d)
+    log("relay: ανέβηκε στο branch relay" if r.returncode == 0 else f"relay: αποτυχία push: {r.stderr.strip()[:300]}")
 
 
 IMPORTS = REPORTS / "imports.json"
@@ -817,7 +908,7 @@ def load_imports(max_age_h=24):
     return out
 
 
-def classify(wl, raw, fetch_peripherals):
+def classify(wl, raw, per_raw):
     pre = wl["prebuilt"]
     pcs, seen = [], set()
     rejected = {"όχι desktop/εξάρτημα": 0, "CPU εκτός λίστας": 0, f"VRAM < {pre['min_vram']} GB": 0,
@@ -850,26 +941,18 @@ def classify(wl, raw, fetch_peripherals):
 
     # --- περιφερειακά
     log("Περιφερειακά:")
-    cat_pages = {}
-    if fetch_peripherals:
-        for cat_key, url in wl["peripheral_categories"]["plaisio"].items():
-            log(f"  plaisio   {cat_key}")
-            cat_pages.setdefault(cat_key, []).extend(plaisio_category(url))
+    per_raw = [o for o in per_raw if o.get("price")]
     pers = []
     for t in wl["targets"]:
         n_hit = 0
-        for o in cat_pages.get(t["cat"], []) + imported:
+        cands = [o for o in per_raw if o.get("_cat") == t["cat"] or o.get("_t") == t["key"]] + imported
+        for o in cands:
             if matches(t, o["name"], o["price"], wl):
+                o = {k: v for k, v in o.items() if k not in ("_cat", "_t")}
                 pers.append(dict(o, cat=t["cat"], target=t["key"], tags=tags_of(t, o["name"])))
                 n_hit += 1
-        for sk in (wl["peripheral_search_stores"] if fetch_peripherals else []):
-            res = SEARCHERS[sk](t.get("q_" + sk) or t["q"])
-            for o in res:
-                if matches(t, o["name"], o["price"], wl):
-                    pers.append(dict(o, cat=t["cat"], target=t["key"], tags=tags_of(t, o["name"])))
-                    n_hit += 1
-                elif DEBUG:
-                    log(f"      x {o['price']:8.2f} {sk:8s} {o['name'][:90]}")
+            elif DEBUG:
+                log(f"      x {o['price']:8.2f} {o['store']:8s} {o['name'][:90]}")
         log(f"  {t['key']:14s} {n_hit} προσφορές")
     seen, out = set(), []
     for o in pcs + pers:
@@ -1499,6 +1582,10 @@ def main():
     ap.add_argument("--no-publish", action="store_true", help="χωρίς ανέβασμα στο GitHub Pages")
     ap.add_argument("--public-out", help="γράψε και δημόσιο αντίγραφο της σελίδας (χωρίς emails) σε αυτό το αρχείο")
     ap.add_argument("--log", help="γράψε την έξοδο σε αρχείο (για pythonw / Task Scheduler)")
+    ap.add_argument("--relay", action="store_true",
+                    help="τοπικά: σάρωσε μόνο τα καταστήματα που μπλοκάρουν το GitHub και ανέβασέ τα στο branch relay")
+    ap.add_argument("--relay-no-push", action="store_true", help="με --relay: μόνο reports/relay.json, χωρίς push")
+    ap.add_argument("--relay-in", help="GitHub: ενσωμάτωσε το relay.json του τοπικού υπολογιστή")
     args = ap.parse_args()
     global DEBUG
     DEBUG = args.debug
@@ -1519,6 +1606,9 @@ def main():
         return
 
     wl = json.loads(WATCHLIST.read_text(encoding="utf-8"))
+    if args.relay:
+        relay_scan(wl, push=not args.relay_no_push)
+        return
     if not args.no_fetch and not acquire_lock():
         log("Τρέχει ήδη άλλη σάρωση (reports/.scan.lock) – έξοδος.")
         return
@@ -1542,10 +1632,10 @@ def main():
             offers = [o for o in offers if (o["cat"] == "prebuilt" and not pc_reject_reason(parse_specs(o["name"]), wl["prebuilt"]))
                       or o["target"] in keys]
             have = {(o["store"], o["url"], o["target"]) for o in offers}
-            offers += [o for o in classify(wl, load_imports(), fetch_peripherals=False)
+            offers += [o for o in classify(wl, load_imports(), [])
                        if (o["store"], o["url"], o["target"]) not in have]
         else:
-            offers = collect(wl)
+            offers = collect(wl, load_relay(args.relay_in, wl) if args.relay_in else None)
         first_run = history_sync(con, offers, today)
         for o in offers:
             assess(o, wl, today)
