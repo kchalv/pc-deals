@@ -863,8 +863,8 @@ def relay_push():
         log("relay: δεν βρέθηκε git remote 'origin'")
         return
     d = REPORTS / "relay_git"
-    if d.exists():
-        shutil.rmtree(d, ignore_errors=True)
+    if d.exists():   # τα αντικείμενα του git είναι read-only στα Windows
+        shutil.rmtree(d, onerror=lambda f, p, _: (os.chmod(p, 0o700), f(p)))
     d.mkdir(parents=True)
     shutil.copy(RELAY_FILE, d / "relay.json")
     run("init", "-q", "-b", "relay", cwd=d)
