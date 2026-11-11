@@ -2,18 +2,19 @@
 Σκάνερ προσφορών ΕΛΛΗΝΙΚΩΝ καταστημάτων: έτοιμα gaming PC (Fortnite + CUDA / local LLM / AI agents)
 και, σε ξεχωριστή λίστα, περιφερειακά (ποντίκι, πληκτρολόγιο, οθόνη).
 
-Σε κάθε εκτέλεση (κάθε ώρα από τον Task Scheduler ή με το κουμπί «Ανανέωση» της σελίδας):
+Σε κάθε εκτέλεση (κάθε 2 ώρες από το GitHub Actions ή με το κουμπί «Ανανέωση» της σελίδας):
   1. Τραβάει τιμές από ελληνικά καταστήματα που απαντούν σε απλό HTTP (χωρίς bot-bypass):
        Plaisio (κατηγορίες + αστέρια/κριτικές), e-shop.gr (λίστα GAMER με «ελάχιστη 30 ημερών»),
        e-gate (αναζήτηση), msystems (αναζήτηση), Germanos (αναζήτηση περιφερειακών).
      Skroutz / Κωτσόβολος / Public / You / BestPrice μπλοκάρουν bots -> έτοιμα links χειροκίνητου ελέγχου.
   2. Διαβάζει από το όνομα CPU / GPU / VRAM / RAM / SSD και βαθμολογεί κάθε PC:
-       Fortnite (CPU-bound: X3D = κορυφή), AI (VRAM NVIDIA για CUDA / LLM), συνολικό, αξία ανά 1.000 €.
-     Μόνο NVIDIA RTX (CUDA). AMD/Intel κάρτες και laptops απορρίπτονται.
+       Fortnite (CPU-bound: X3D = κορυφή), AI (VRAM για local LLM, AMD −20% χωρίς CUDA), συνολικό, αξία ανά 1.000 €.
+     Κρατά μόνο CPU από watchlist.json -> prebuilt.allowed_cpus (9800X3D / 7800X3D / Ultra 7 270K Plus / i9-14900K/KS),
+     RAM ≥ 32 GB και κάρτα AMD ή NVIDIA με ≥ 16 GB VRAM. Laptops και εξαρτήματα απορρίπτονται.
   3. Κρατά ιστορικό τιμών (SQLite, ημερήσιο min) -> 30ήμερο χαμηλό, διάμεση, ιστορικό χαμηλό,
      και ελέγχει αν η «έκπτωση» του καταστήματος είναι αληθινή.
   4. Γράφει τη σελίδα reports/latest.html (φιλτράρισμα, ταξινόμηση, κουμπί ανανέωσης μέσω server.py).
-  5. Στέλνει email για ΕΞΑΙΡΕΤΙΚΕΣ προσφορές (κανόνες στο watchlist.json -> alerts, SMTP στο notify.json).
+  5. Στέλνει email με τις ΝΕΕΣ πραγματικές ευκαιρίες (κανόνες στο watchlist.json -> alerts, SMTP στο notify.json).
 
 Χρήση:  python pc_deals.py               (πλήρης σάρωση)
         python pc_deals.py --open        (+ άνοιγμα σελίδας)
@@ -41,6 +42,12 @@ from email.mime.text import MIMEText
 from pathlib import Path
 
 import requests
+
+try:   # προαιρετικό: πιστοποιητικά του λειτουργικού (π.χ. εταιρικό δίκτυο με TLS inspection). pip install truststore
+    import truststore
+    truststore.inject_into_ssl()
+except ImportError:
+    pass
 
 BASE = Path(__file__).resolve().parent
 DB = BASE / "history.sqlite"
@@ -315,18 +322,306 @@ def msystems_search(q):
     return out
 
 
+# ---------------------------------------------------------------- WooCommerce Store API (ucase, tetrabyte)
+def woo_store_api(store, base, q, max_pages=1, per_page=50):
+    """GET {base}/wp-json/wc/store/v1/products?search=.. (δημόσιο, χωρίς κλειδί· επιτρέπεται στο robots.txt).
+    None = το API δεν απάντησε."""
+    out, seen = [], set()
+    for page in range(1, max_pages + 1):
+        url = f"{base}/wp-json/wc/store/v1/products?search={urllib.parse.quote(q)}&per_page={per_page}&page={page}"
+        t = get(url, store)
+        if not t:
+            return out if page > 1 else None
+        try:
+            items = json.loads(t)
+        except ValueError:
+            FETCH_LOG.append((store, url, 200, 0, "bad JSON"))
+            break
+        if not isinstance(items, list):
+            break
+        n = 0
+        for it in items:
+            u, pr = it.get("permalink"), it.get("prices") or {}
+            div = 10 ** int(pr.get("currency_minor_unit") or 0)
+            try:
+                p = int(pr.get("price") or 0) / div
+                reg = int(pr.get("regular_price") or 0) / div
+                if (pr.get("price_range") or {}).get("min_amount"):   # προϊόν με παραλλαγές -> «από»
+                    p = int(pr["price_range"]["min_amount"]) / div
+            except ValueError:
+                continue
+            p = parse_price(f"{p:.2f}")
+            if not (u and p) or u in seen:
+                continue
+            seen.add(u)
+            n += 1
+            st = (it.get("stock_availability") or {}).get("text") or ("" if it.get("is_in_stock") else "Εξαντλημένο")
+            avg = float(it.get("average_rating") or 0)
+            out.append(offer(store, it.get("name", ""), u, p, old=reg if it.get("on_sale") and reg > p else None, stock=st,
+                             rating=avg if avg > 0 else None, reviews=it.get("review_count") if avg > 0 else None))
+        FETCH_LOG.append((store, url, 200, n, ""))
+        if len(items) < per_page:
+            break
+    return out
+
+
+def ucase_search(q, max_pages=1):
+    return woo_store_api("ucase", "https://ucase.gr", q, max_pages) or []
+
+
+def tetrabyte_search(q, max_pages=1):
+    out = woo_store_api("tetrabyte", "https://tetrabyte.gr", q, max_pages)
+    if out is None:   # Store API δεν απαντά -> HTML αναζήτηση (Woodmart)
+        qs = "?s=" + urllib.parse.quote_plus(q) + "&post_type=product"
+        out = woodmart_list("tetrabyte", lambda page: "https://tetrabyte.gr/" + (qs if page == 1 else f"page/{page}/{qs}"), max_pages)
+    return out
+
+
+# ---------------------------------------------------------------- i-abox (Astro, χωρίς αναζήτηση)
+IABOX = "https://i-abox.com"
+
+
+def _iabox_get(path):
+    """Το i-abox στέλνει text/html χωρίς charset -> το requests διαβάζει latin-1. Διόρθωση σε UTF-8."""
+    t = get(IABOX + path, "iabox")
+    try:
+        return t.encode("latin-1").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return t
+
+
+def _has_tokens(q, text):
+    text = text.lower()
+    return all(tok in text for tok in q.lower().split())
+
+
+def iabox_search(q="", max_pages=8):
+    """Δεν έχει αναζήτηση: διαβάζουμε τη λίστα /products?shid=true&page=N (περιφερειακά) και τα έτοιμα PC
+    /products/prebuild/<slug> (JSON-LD ProductGroup: κάθε παραλλαγή με τιμή + CPU/GPU/RAM/SSD).
+    Φιλτράρουμε τοπικά με τις λέξεις του q (κενό q = όλα). Οι σελίδες cache-άρονται για όλη τη σάρωση."""
+    out, seen, listing, prebuilds = [], set(), [], []
+    for page in range(1, max_pages + 1):
+        t = _iabox_get("/products?shid=true" + (f"&page={page}" if page > 1 else ""))
+        if not t:
+            break
+        if page == 1:
+            prebuilds = list(dict.fromkeys(re.findall(r'href="(/products/prebuild/[a-z0-9-]+)"', t)))
+        cards = re.findall(r'<a class="text-text-primary-fade[^"]*" href="(/products/[^"]+)"[^>]*>([\s\S]*?)</a>', t)
+        if not cards:
+            break
+        listing += cards
+        if f"page={page + 1}" not in t:
+            break
+    for path in prebuilds:
+        t = _iabox_get(path)
+        n0 = len(out)
+        for m in re.finditer(r'<script[^>]*application/ld\+json[^>]*>([\s\S]*?)</script>', t):
+            try:
+                d = json.loads(m.group(1))
+            except ValueError:
+                continue
+            if not isinstance(d, dict) or d.get("@type") != "ProductGroup":
+                continue
+            for v in d.get("hasVariant", []):
+                props = {p.get("name"): p.get("value", "") for p in v.get("additionalProperty", [])}
+                spec = " / ".join(re.sub(r"\s*\[[^\]]*core\]", "", props[k]) for k in ("CPU", "GPU", "RAM", "Main Storage") if props.get(k))
+                name = f"i-aBox Gaming PC {v.get('name', '')} ({spec})"
+                o = v.get("offers") or {}
+                p, u = parse_price(o.get("price")), v.get("url")
+                if not (p and u) or u in seen or not _has_tokens(q, name + " " + " ".join(props.values())):
+                    continue
+                seen.add(u)
+                avail = o.get("availability", "")
+                out.append(offer("iabox", name, u, p, stock="Διαθέσιμο" if avail.endswith("InStock") else avail.rsplit("/", 1)[-1]))
+        FETCH_LOG.append(("iabox", IABOX + path, 200 if t else 0, len(out) - n0, "prebuild JSON-LD"))
+    for href, body in listing:
+        if href.startswith("/products/prebuild/"):
+            continue
+        h2 = re.search(r"<h2[^>]*>([\s\S]*?)</h2>", body)
+        pr = re.search(r'font-medium mb-0">\s*€\s*([\d.,]+)', body)
+        if not (h2 and pr):
+            continue
+        name, u = clean(h2.group(1)), IABOX + urllib.parse.quote(href, safe="/?=&")
+        if u in seen or not parse_price(pr.group(1)) or not _has_tokens(q, name):
+            continue
+        seen.add(u)
+        old = re.search(r'line-through">\s*€\s*([\d.,]+)', body)
+        st = re.search(r'<span class="text-[a-z-]*stock">([^<]+)</span>', body)
+        out.append(offer("iabox", name, u, parse_price(pr.group(1)), old=parse_price(old.group(1)) if old else None,
+                         stock=st.group(1) if st else ""))
+    return out
+
+
+# ---------------------------------------------------------------- mgmanager (VENDD, robots.txt: Crawl-delay 5)
+def mgmanager_search(q, max_pages=1):
+    out, seen = [], set()
+    qs = urllib.parse.urlencode({"ps": 45, "search-for": q})
+    for page in range(1, max_pages + 1):
+        url = f"https://www.mgmanager.gr/page/search-products/p{page}/?{qs}"
+        t = get(url, "mgmanager", delay=5)
+        if not t:
+            break
+        n = 0
+        for chunk in t.split('class="x-control x-box x-product-box')[1:]:
+            m = re.search(r'<h2 class="heading"[^>]*><a href="([^"]+)"[^>]*>([\s\S]*?)</a>', chunk)
+            pr = re.search(r'class="current-price"[^>]*>([^<]+)<', chunk)
+            if not (m and pr):
+                continue
+            u, p = urllib.parse.urljoin("https://www.mgmanager.gr/", m.group(1)), parse_price(pr.group(1))
+            if not p or u in seen:
+                continue
+            seen.add(u)
+            n += 1
+            old = re.search(r'"DisplayDeletedPrice":\{"Value":([\d.]+)', chunk)
+            av = re.search(r'<span class="availability[^"]*">([^<]+)<', chunk)
+            out.append(offer("mgmanager", m.group(2), u, p, old=float(old.group(1)) if old else None, stock=av.group(1) if av else ""))
+        pc = re.search(r'data-page-count="(\d+)"', t)
+        FETCH_LOG.append(("mgmanager", url, 200, n, ""))
+        if n == 0 or not pc or page >= int(pc.group(1)):
+            break
+    return out
+
+
+# ---------------------------------------------------------------- kpl.gr (OpenCart· το robots.txt απαγορεύει την αναζήτηση)
+def _compact(s):
+    return re.sub(r"[^0-9a-zα-ω]+", "", s.lower())
+
+
+def kpl_search(q, max_pages=1):
+    """Η αναζήτηση και η σελιδοποίηση απαγορεύονται στο robots.txt -> ταιριάζουμε το q στο sitemap.xml
+    (<image:caption> = όνομα) και διαβάζουμε έως 15·max_pages σελίδες προϊόντων (JSON-LD / τιμή Journal3)."""
+    t = get("https://kpl.gr/sitemap.xml", "kpl")
+    toks, qc = [_compact(x) for x in q.split() if _compact(x)], _compact(q)
+    hits = []
+    for blk in re.findall(r"<url>([\s\S]*?)</url>", t):
+        loc = re.search(r"<loc>\s*([^<]+?)\s*</loc>", blk)
+        cap = re.search(r"<image:caption>([\s\S]*?)</image:caption>", blk)
+        if not loc:
+            continue
+        cap = html.unescape(cap.group(1)) if cap else ""
+        hay = _compact(cap + " " + loc.group(1).rsplit("/", 1)[-1])
+        if qc in hay or all(tk in hay for tk in toks):
+            hits.append((loc.group(1), cap))
+    FETCH_LOG.append(("kpl", "https://kpl.gr/sitemap.xml #" + q, 200 if t else 0, len(hits), "ταίριαξαν στο sitemap"))
+    out = []
+    for loc, cap in hits[: 15 * max_pages]:
+        t = get(loc, "kpl")
+        if not t:
+            continue
+        price = old = None
+        ld_name, stock = "", ""
+        for m in re.finditer(r'<script[^>]*application/ld\+json[^>]*>([\s\S]*?)</script>', t):
+            try:
+                d = json.loads(m.group(1))
+            except ValueError:
+                continue
+            if isinstance(d, dict) and d.get("@type") == "Product":
+                ld_name = d.get("name", "")
+                of = d.get("offers") or {}
+                of = (of[0] if of else {}) if isinstance(of, list) else of
+                price = parse_price(of.get("price"))
+                stock = (of.get("availability") or "").rsplit("/", 1)[-1]
+        new = re.search(r'class="product-price-new">([^<]+)<', t)
+        oldm = re.search(r'class="product-price-old">([^<]+)<', t)
+        if new:
+            price = parse_price(new.group(1)) or price
+            old = parse_price(oldm.group(1)) if oldm else None
+        elif not price:
+            pm = re.search(r'class="product-price">([^<]+)<', t)
+            price = parse_price(pm.group(1)) if pm else None
+        st = re.search(r'class="product-stock[^"]*"><b>[^<]*</b>\s*<span>([^<]+)<', t)
+        title = re.search(r'class="title page-title">([^<]+)<', t)
+        name = (title.group(1) if title else "") or ld_name or cap
+        if price:
+            out.append(offer("kpl", name, loc, price, old=old, stock=st.group(1) if st else stock))
+        else:
+            FETCH_LOG.append(("kpl", loc, 200, 0, "δεν βρέθηκε τιμή"))
+    return out
+
+
+# ---------------------------------------------------------------- Κωτσόβολος (μόνο κατηγορίες· η αναζήτηση απαγορεύεται στο robots.txt)
+KOTS_API = "https://www.kotsovolos.gr/api/ext/getProductsByCategory"   # robots.txt: Allow: /api/ext/getProductsByCategory*
+KOTS_CATS = {"35750": "desktops", "35519": "gaming-mice", "35520": "gaming-keyboards"}
+KOTS_STOCK = {"1": "Άμεσα διαθέσιμο", "2": "Διαθέσιμο", "3": "Κατόπιν παραγγελίας", "4": "Μη διαθέσιμο"}
+_GREEK_LOOKALIKE = str.maketrans("ΑΒΕΖΗΙΚΜΝΟΡΤΥΧαβεικνορτυχ", "ABEZHIKMNOPTYXaBeikvopTyx")
+
+
+def _kots_norm(s):
+    return re.sub(r"[^a-z0-9]+", " ", (s or "").translate(_GREEK_LOOKALIKE).lower()).strip()
+
+
+def _kots_attr(e, *names):
+    for a in e.get("attributes") or []:
+        if (a.get("name") or "").strip() in names:
+            vals = [v.get("value") for v in a.get("values") or [] if v.get("value")]
+            if vals:
+                return clean(vals[0])
+    return ""
+
+
+def kotsovolos_search(q="", max_pages=1):
+    """Διαβάζει τις κατηγορίες desktops / gaming ποντίκια / gaming πληκτρολόγια (200 ανά κλήση, cache ανά σάρωση)
+    και φιλτράρει με τις λέξεις του q (κενό q = όλα). Στα PC προσθέτει CPU / GPU / VRAM / RAM στο όνομα."""
+    toks, out, seen = _kots_norm(q).split(), [], set()
+    for cat_id in KOTS_CATS:
+        url = KOTS_API + "?" + urllib.parse.urlencode({"params": "pageNumber=1&pageSize=200", "catId": cat_id, "storeId": "10151", "isCPage": "false"})
+        t = get(url, "kotsovolos")
+        try:
+            entries = (json.loads(t) if t else {}).get("catalogEntryView") or []
+        except ValueError:
+            FETCH_LOG.append(("kotsovolos", url, 200, 0, "bad JSON"))
+            continue
+        n = 0
+        for e in entries:
+            name = e.get("name") or ""
+            cpu = _kots_attr(e, "Μοντέλο Επεξεργαστή")
+            gpu = _kots_attr(e, "Κάρτα Γραφικών").translate(_GREEK_LOOKALIKE)
+            hay = " " + _kots_norm(" ".join([name, cpu, gpu])) + " "
+            if not all(f" {tk} " in hay or (len(tk) > 3 and tk in hay) for tk in toks):
+                continue
+            ud = (e.get("UserData") or [{}])[0]
+            if not ud.get("seo_url"):
+                continue
+            u = "https://www.kotsovolos.gr/" + ud["seo_url"].lstrip("/")
+            prices = {p.get("usage"): parse_price(p.get("value")) for p in e.get("price") or []}
+            price = parse_price(e.get("price_EUR")) or prices.get("Offer")
+            if not price or u in seen:
+                continue
+            seen.add(u)
+            n += 1
+            full = name
+            if cat_id == "35750":
+                vram, ram = _kots_attr(e, "Μνήμη Κάρτας Γραφικών (GB)"), _kots_attr(e, "RAM Memory", "Μνήμη")
+                parts = [x for x in (cpu, (gpu + (f" {vram}GB" if vram.isdigit() else "")) if gpu else "", f"{ram} RAM" if ram else "") if x]
+                full = f"Desktop PC {name} ({' / '.join(parts)})" if parts else name
+            out.append(offer("kotsovolos", full, u, price, old=prices.get("Display"),
+                             stock=KOTS_STOCK.get(str(ud.get("x_availability_hd")), "")))
+        FETCH_LOG.append(("kotsovolos", url, 200 if t else 0, n, f"q={q}" if q else ""))
+    return out
+
+
 SEARCHERS = {"eshop": eshop_search, "germanos": germanos_search, "egate": lambda q: egate_search(q, max_pages=1),
-             "msystems": msystems_search, "praxi": praxi_search}
+             "msystems": msystems_search, "praxi": praxi_search, "ucase": ucase_search, "tetrabyte": tetrabyte_search,
+             "iabox": iabox_search, "mgmanager": mgmanager_search, "kpl": kpl_search, "kotsovolos": kotsovolos_search}
+# kind -> συνάρτηση(arg, max_pages) για τις πηγές έτοιμων PC στο watchlist.json
+PC_SOURCES = {"egate": egate_search, "praxi": praxi_search, "ucase": ucase_search, "tetrabyte": tetrabyte_search,
+              "iabox": iabox_search, "mgmanager": mgmanager_search, "kpl": kpl_search, "kotsovolos": kotsovolos_search}
 
 
 # ============================================================================ specs & scoring (έτοιμα PC)
-GPU_TABLE = {  # key: (σχετική απόδοση gaming 0-100, VRAM GB)
+GPU_TABLE = {  # key: (σχετική απόδοση gaming 0-100, VRAM GB)  -- NVIDIA RTX
     "5090": (100, 32), "4090": (88, 24), "5080": (74, 16), "4080 super": (70, 16), "4080": (68, 16),
     "5070 ti": (64, 16), "4070 ti super": (60, 16), "4070 ti": (55, 12), "5070": (52, 12), "4070 super": (52, 12),
     "4070": (45, 12), "3090 ti": (58, 24), "3090": (55, 24), "3080 ti": (50, 12), "3080": (46, 10),
     "5060 ti": (40, 8), "4060 ti": (36, 8), "3070 ti": (38, 8), "3070": (36, 8), "5060": (33, 8),
     "3060 ti": (30, 8), "4060": (28, 8), "3060": (24, 12), "5050": (24, 8), "3050": (14, 8),
 }
+AMD_GPU_TABLE = {  # AMD Radeon RX: (απόδοση gaming 0-100, VRAM GB)
+    "9070 xt": (66, 16), "9070 gre": (52, 12), "9070": (59, 16), "9060 xt": (40, 8), "9060": (33, 8),
+    "7900 xtx": (72, 24), "7900 xt": (62, 20), "7900 gre": (54, 16), "7800 xt": (50, 16), "7700 xt": (43, 12),
+    "7600 xt": (31, 16), "7600": (29, 8), "6950 xt": (52, 16), "6900 xt": (49, 16), "6800 xt": (46, 16), "6800": (41, 16),
+}
+VRAM_VALUES = (6, 8, 10, 12, 16, 20, 24, 32)
 VRAM_SCORE = {32: 100, 24: 85, 20: 70, 16: 60, 12: 38, 10: 30, 8: 18, 6: 8}
 RAM_SIZES = {8, 16, 24, 32, 48, 64, 96, 128, 192, 256}
 X3D_SCORE = {9800: 100, 9850: 100, 9950: 97, 9900: 93, 7800: 92, 7950: 90, 7900: 86, 9600: 88,
@@ -334,28 +629,43 @@ X3D_SCORE = {9800: 100, 9850: 100, 9950: 97, 9900: 93, 7800: 92, 7950: 90, 7900:
 
 
 def parse_specs(name):
-    n = name.lower().replace("‑", "-")
-    sp = {"cpu": None, "cpu_score": 50, "x3d": False, "x3d9k": False, "gpu": None, "nvidia": False,
+    n = name.replace("‑", "-").translate(_GREEK_LOOKALIKE).lower()   # «RX 9070 ΧΤ» με ελληνικά Χ/Τ
+    sp = {"cpu": None, "cpu_score": 50, "x3d": False, "x3d9k": False, "gpu": None, "nvidia": False, "amd": False,
           "gpu_perf": 0, "vram": None, "ram": None, "ssd": None}
-    # ---- GPU (μόνο NVIDIA RTX μετράει για CUDA)
-    g = re.search(r"rtx\s*-?\s*(\d{4})\s*(ti\s*super|ti|super)?", n)
+    # ---- GPU: NVIDIA RTX ή AMD Radeon RX (η VRAM από τον πίνακα, ή από το «16GB» που ακολουθεί)
     rest = n
+    g = re.search(r"rtx\s*-?\s*(\d{4})\s*(ti\s*super|ti|super)?", n)
+    a = None if g else (re.search(r"\brx\s*-?\s*(\d{4})\s*(xtx|xt|gre)?", n)
+                        or re.search(r"(?<![\d.-])(9070|9060|7900|7800|7700|7600)\s*(xtx|xt|gre)\b", n))   # «9070XT» χωρίς «RX»
+    key, table = None, None
     if g:
-        key = (g.group(1) + (" " + re.sub(r"\s+", " ", g.group(2)) if g.group(2) else "")).strip()
-        if key in GPU_TABLE:
-            perf, vram = GPU_TABLE[key]
-            vm = re.match(r"[^/()]{0,14}?(\d{1,2})\s*gb", n[g.end():])
-            if vm and int(vm.group(1)) in (6, 8, 10, 12, 16, 20, 24, 32):
-                vram = int(vm.group(1))
-            sp.update(gpu="RTX " + key.upper().replace("TI", "Ti").replace("SUPER", "Super"), nvidia=True, gpu_perf=perf, vram=vram)
-            rest = n[:g.start()] + " " + n[g.end() + (vm.end() if vm else 0):]
+        key, table = (g.group(1) + (" " + re.sub(r"\s+", " ", g.group(2)) if g.group(2) else "")).strip(), GPU_TABLE
+    elif a:
+        key, table, g = (a.group(1) + (" " + a.group(2) if a.group(2) else "")).strip(), AMD_GPU_TABLE, a
+    if key and key in table:
+        perf, vram = table[key]
+        vm = re.match(r"[^/()+,]{0,16}?(\d{1,2})\s*gb", n[g.end():])
+        if vm and int(vm.group(1)) in VRAM_VALUES:
+            vram = int(vm.group(1))
+        if table is GPU_TABLE:
+            sp.update(gpu="RTX " + key.upper().replace("TI", "Ti").replace("SUPER", "Super"), nvidia=True)
+        else:
+            sp.update(gpu="Radeon RX " + key.upper(), amd=True)
+        sp.update(gpu_perf=perf, vram=vram)
+        rest = n[:g.start()] + " " + n[g.end() + (vm.end() if vm else 0):]
     elif re.search(r"\b(rx\s*\d{4}|radeon|arc\s*[ab]\d{3}|intel arc)", n):
-        sp["gpu"] = "AMD/Intel"
+        sp["gpu"] = "AMD/Intel (μοντέλο;)"
     # ---- CPU
     c = re.search(r"(?:ryzen\s*|\br)([3579])\s*[- ]?\s*(\d{4})\s*(hx3d|x3d2?|xt|x|f|g|hx|hs|h)?", n)
     if c:
-        model, suf = int(c.group(2)), (c.group(3) or "")
-        label = f"Ryzen {c.group(1)} {model}{suf.upper()}"
+        tier, model, suf = c.group(1), int(c.group(2)), (c.group(3) or "")
+    else:   # σκέτο «9800X3D» χωρίς «Ryzen 7»: η βαθμίδα από το μοντέλο (x800X3D = Ryzen 7, x900/x950X3D = Ryzen 9)
+        c = re.search(r"(?<![\d.])([579]\d00)\s*(x3d)\b", n)
+        if c:
+            model, suf = int(c.group(1)), "x3d"
+            tier = "9" if model % 1000 >= 900 else "7" if model % 1000 >= 700 else "5"
+    if c:
+        label = f"Ryzen {tier} {model}{suf.upper()}"
         if suf == "hx3d":   # mobile X3D σε mini-tower (π.χ. Lenovo LOQ Tower 9955HX3D)
             sc = 84
             sp.update(x3d=True)
@@ -377,17 +687,22 @@ def parse_specs(name):
                 sc -= 8
             sp.update(cpu=f"Core Ultra {tier} {model}{suf.upper()}{' Plus' if c.group(4) else ''}", cpu_score=sc)
         else:
-            c = re.search(r"\bi([3579])\s*[- ]\s*(\d{4,5})(kf|k|f|hx|h)?", n)
+            c = (re.search(r"\bi([3579])\s*[- ]\s*(\d{4,5})(kf|ks|k|f|hx|h)?", n)
+                 or re.search(r"(?:\bcore\s*|\bintel\s*)()(1[234]900)(kf|ks|k|f)?\b", n))   # «Intel 14900K» χωρίς «i9»
             if c:
-                tier, gen = int(c.group(1)), int(c.group(2)[:2])
-                sc = {9: 80, 7: 77, 5: 70, 3: 58}[tier] - (4 if gen <= 12 else 0) - (8 if c.group(3) in ("hx", "h") else 0)
-                sp.update(cpu=f"Core i{tier}-{c.group(2)}{(c.group(3) or '').upper()}", cpu_score=sc)
+                tier, num, suf = int(c.group(1) or 9), c.group(2), (c.group(3) or "")
+                gen = int(num[:2])
+                sc = {9: 80, 7: 77, 5: 70, 3: 58}[tier] - (4 if gen <= 12 else 0) - (8 if suf in ("hx", "h") else 0) + (1 if suf == "ks" else 0)
+                sp.update(cpu=f"Core i{tier}-{num}{suf.upper()}", cpu_score=sc)
             else:
                 c = re.search(r"(ryzen|ultra)\s*([3579])\b", n)
                 if c:
                     sp.update(cpu=f"{c.group(1).title()} {c.group(2)} (μοντέλο;)", cpu_score=55 if c.group(1) == "ryzen" else 68)
     # ---- RAM / SSD (αφού αφαιρεθεί το VRAM)
-    for m in re.finditer(r"(\d{1,3})\s*gb(?!\s*(ssd|nvme|hdd|m\.2|emmc))", rest):
+    kit = re.search(r"\b([1-4])\s*x\s*(8|16|24|32|48|64)\s*gb", rest)   # «2x16GB» = 32 GB
+    if kit and int(kit.group(1)) * int(kit.group(2)) in RAM_SIZES:
+        sp["ram"] = int(kit.group(1)) * int(kit.group(2))
+    for m in ([] if kit else re.finditer(r"(\d{1,3})\s*gb(?!\s*(ssd|nvme|hdd|m\.2|emmc))", rest)):
         v = int(m.group(1))
         if v in RAM_SIZES:
             sp["ram"] = v
@@ -403,14 +718,25 @@ def score_pc(sp, price, wl):
     perf = sp["gpu_perf"]
     fn = 0.65 * sp["cpu_score"] + 0.35 * min(100, perf * 1.6)
     vs = VRAM_SCORE.get(sp["vram"] or 0, 0)
-    ai = min(100, 0.75 * vs + 0.25 * perf)
+    ai = min(100, 0.75 * vs + 0.25 * perf) * (0.8 if sp.get("amd") else 1)   # AMD: ROCm αντί για CUDA, λιγότερη υποστήριξη
     ram = sp["ram"] or 0
     ram_adj = 5 if ram >= 64 else 2 if ram >= 48 else 0 if ram >= 32 else -8 if ram else 0
     total = 0.5 * fn + 0.5 * ai + ram_adj
     target_gpus = set(wl["prebuilt"]["target_gpus"])
-    gkey = (sp["gpu"] or "").lower().replace("rtx ", "")
+    gkey = (sp["gpu"] or "").lower().replace("rtx ", "").replace("radeon ", "")
     return {"fn": round(fn), "ai": round(ai), "total": round(total), "value": round(total / (price / 1000), 1),
             "target": bool(sp["x3d9k"] and gkey in target_gpus), "gkey": gkey}
+
+
+def pc_reject_reason(sp, pre):
+    """Κανόνες του watchlist (prebuilt): CPU από τη λίστα, κάρτα AMD/NVIDIA με ≥ min_vram, RAM ≥ min_ram. None = δεκτό."""
+    if not sp["cpu"] or not any(re.fullmatch(rx, sp["cpu"], re.I) for rx in pre["allowed_cpus"]):
+        return "CPU εκτός λίστας"
+    if not (sp["nvidia"] or sp["amd"]) or (sp["vram"] or 0) < pre["min_vram"]:
+        return f"VRAM < {pre['min_vram']} GB"
+    if (sp["ram"] or 0) < pre["min_ram"]:
+        return f"RAM < {pre['min_ram']} GB ή άγνωστη"
+    return None
 
 
 # ============================================================================ matching περιφερειακών
@@ -447,12 +773,10 @@ def collect(wl):
             raw += plaisio_category(arg)
         elif kind == "eshop_list":
             raw += eshop_list(arg)
-        elif kind == "egate":
-            raw += egate_search(arg, max_pages=src.get("pages", 8))
         elif kind == "msystems":
             raw += msystems_search(arg)
-        elif kind == "praxi":
-            raw += praxi_search(arg, max_pages=src.get("pages", 10))
+        elif kind in PC_SOURCES:
+            raw += PC_SOURCES[kind](arg, max_pages=src.get("pages", 1))
     imp = load_imports()
     if imp:
         log(f"  import    {len(imp)} τιμές από τον browser (bookmarklet)")
@@ -461,7 +785,8 @@ def collect(wl):
 
 
 IMPORTS = REPORTS / "imports.json"
-SRC_LABEL = {"skroutz": "Skroutz", "kotsovolos": "Κωτσόβολος", "public": "Public", "bestprice": "BestPrice", "you": "You.gr"}
+SRC_LABEL = {"skroutz": "Skroutz", "kotsovolos": "Κωτσόβολος", "public": "Public", "bestprice": "BestPrice", "you": "You.gr",
+             "amazon.de": "Amazon.de", "amazon.it": "Amazon.it", "amazon": "Amazon", "cosmodata": "Cosmodata"}
 
 
 def load_imports(max_age_h=24):
@@ -494,7 +819,10 @@ def load_imports(max_age_h=24):
 
 def classify(wl, raw, fetch_peripherals):
     pre = wl["prebuilt"]
-    pcs, rejected, seen = [], {"όχι desktop/εξάρτημα": 0, "όχι NVIDIA RTX": 0, "εκτός εύρους τιμής": 0}, set()
+    pcs, seen = [], set()
+    rejected = {"όχι desktop/εξάρτημα": 0, "CPU εκτός λίστας": 0, f"VRAM < {pre['min_vram']} GB": 0,
+                f"RAM < {pre['min_ram']} GB ή άγνωστη": 0, "εκτός εύρους τιμής": 0}
+    raw = [o for o in raw if o.get("price")]
     imported = [o for o in raw if o["store"] == "import"]
     for o in raw:
         n = norm(o["name"])
@@ -506,18 +834,19 @@ def classify(wl, raw, fetch_peripherals):
             if DEBUG:
                 log(f"      x(desktop) {o['price']:8.0f}  {o['name'][:100]}")
             continue
-        sp = parse_specs(o["name"])
-        if not sp["nvidia"]:
-            rejected["όχι NVIDIA RTX"] += 1
+        sp = parse_specs(o["name"] + " " + o.get("specs", ""))
+        why = pc_reject_reason(sp, pre)
+        if why:
+            rejected[why] += 1
             if DEBUG:
-                log(f"      x(gpu)     {o['price']:8.0f}  {o['name'][:100]}")
+                log(f"      x({why[:10]}) {o['price']:8.0f}  {sp['cpu']} | {sp['gpu']} {sp['vram']} | {sp['ram']}  {o['name'][:80]}")
             continue
         if not (pre["min_price"] <= o["price"] <= pre["max_price"]):
             rejected["εκτός εύρους τιμής"] += 1
             continue
         o.update(cat="prebuilt", target="pc", spec=sp, score=score_pc(sp, o["price"], wl))
         pcs.append(o)
-    log(f"  -> {len(pcs)} έτοιμα PC με NVIDIA RTX από {len(raw)} προϊόντα ({', '.join(f'{k}: {v}' for k, v in rejected.items())})")
+    log(f"  -> {len(pcs)} έτοιμα PC από {len(raw)} προϊόντα ({', '.join(f'{k}: {v}' for k, v in rejected.items())})")
 
     # --- περιφερειακά
     log("Περιφερειακά:")
@@ -692,12 +1021,27 @@ def assess(o, wl, today):
         ref = t.get("ref_price")
         if ref and p <= ref * (1 - al["peripheral_below_ref"]):
             why.append(f"{(1 - p / ref) * 100:.0f}% κάτω από την τιμή αναφοράς {fmt(ref)} €")
-    if o.get("stock") and re.search(r"(?i)μη διαθέσιμο|εξαντλ", o["stock"]):
+    unavailable = bool(o.get("stock") and re.search(r"(?i)μη διαθέσιμο|εξαντλ", o["stock"]))
+    if unavailable:
         why = []
     o["excellent"] = bool(why)
     o["why"] = why
     if why:
         badges.insert(0, ["exc", "ΕΞΑΙΡΕΤΙΚΗ"])
+    # ---- «πραγματική ευκαιρία» για το email (κάθε 2 ώρες): εξαιρετική, επιβεβαιωμένη έκπτωση, ή νέο ιστορικό χαμηλό
+    opp = list(why)
+    if not opp and not unavailable:
+        if real is True and disc and disc >= al.get("email_real_discount_min", 0.05):
+            opp.append(f"πραγματική έκπτωση {disc * 100:.0f}% (επιβεβαιωμένη από ιστορικό)")
+        elif real is True and st["min30"] is not None and p <= st["min30"] * (1 - al.get("email_real_discount_min", 0.05)):
+            opp.append(f"{(1 - p / st['min30']) * 100:.0f}% κάτω από κάθε τιμή των τελευταίων 30 ημερών")
+        if al.get("email_new_low", True) and st["allmin"] is not None and st["days"] >= 3 and p < st["allmin"] * 0.98:
+            opp.append(f"νέο ιστορικό χαμηλό (πριν {fmt(st['allmin'])} €)")
+        if o["cat"] == "prebuilt" and o["score"]["total"] < al["prebuilt_min_score"]:
+            opp = []
+    o["opportunity"] = opp
+    if opp and not why:
+        badges.insert(0, ["real", "ευκαιρία (email)"])
     o["badges"], o["notes"] = badges, notes
     o["real_disc"] = real
     o["drop_med"] = round(drop_med, 3) if drop_med is not None else None
@@ -750,31 +1094,35 @@ def send_email(cfg, subject, body_html):
 
 def email_alerts(con, offers, wl):
     cfg = notify_cfg()
-    exc = [o for o in offers if o.get("excellent")]
+    opps = [o for o in offers if o.get("opportunity")]
     fresh = []
-    for o in exc:
+    for o in opps:   # μόνο νέες: μία φορά ανά προϊόν, ξανά μόνο αν πέσει ≥2% από την τιμή του τελευταίου email
         row = con.execute("select price from alerts where key=?", (o["key"],)).fetchone()
         if row is None or o["price"] < row[0] * 0.98:
             fresh.append(o)
     if not fresh:
-        log(f"Email: καμία νέα εξαιρετική προσφορά ({len(exc)} ήδη ειδοποιημένες ή καμία).")
-        return "καμία νέα εξαιρετική προσφορά"
+        log(f"Email: καμία νέα πραγματική ευκαιρία ({len(opps)} ήδη ειδοποιημένες ή καμία).")
+        return "καμία νέα πραγματική ευκαιρία"
     if not email_ready(cfg):
-        log(f"Email: {len(fresh)} εξαιρετικές προσφορές αλλά το notify.json δεν έχει ρυθμιστεί (κωδικός SMTP).")
-        return f"{len(fresh)} εξαιρετικές – email ΔΕΝ στάλθηκε (λείπει κωδικός SMTP στο notify.json)"
+        log(f"Email: {len(fresh)} νέες ευκαιρίες αλλά το notify.json δεν έχει ρυθμιστεί (κωδικός SMTP).")
+        return f"{len(fresh)} νέες ευκαιρίες – email ΔΕΝ στάλθηκε (λείπει κωδικός SMTP στο notify.json)"
     labels = {t["key"]: t["label"] for t in wl["targets"]}
+    n_exc = sum(1 for o in fresh if o.get("excellent"))
+    exc_tag = "<b style='color:#16a34a'>ΕΞΑΙΡΕΤΙΚΗ</b> "
     rows = "".join(
-        f"<tr><td style='padding:6px;border-bottom:1px solid #ddd'><a href='{html.escape(o['url'])}'>{html.escape(o['name'][:120])}</a>"
+        f"<tr><td style='padding:6px;border-bottom:1px solid #ddd'>{exc_tag if o.get('excellent') else ''}"
+        f"<a href='{html.escape(o['url'])}'>{html.escape(o['name'][:120])}</a>"
         f"<br><small>{html.escape(wl['stores'][o['store']]['label'])} · {html.escape('PC' if o['cat'] == 'prebuilt' else labels.get(o['target'], o['target']))}"
-        f" · {html.escape('; '.join(o['why']))}</small></td>"
+        f" · {html.escape('; '.join(o['opportunity']))}</small></td>"
         f"<td style='padding:6px;border-bottom:1px solid #ddd;white-space:nowrap'><b>{fmt(o['price'])} €</b>"
         f"{'<br><s>' + fmt(o['old']) + ' €</s>' if o.get('old') else ''}</td></tr>"
-        for o in sorted(fresh, key=lambda o: (o["cat"] != "prebuilt", o["price"])))
-    body = (f"<p>Βρέθηκαν <b>{len(fresh)}</b> εξαιρετικές προσφορές σε ελληνικά καταστήματα.</p>"
+        for o in sorted(fresh, key=lambda o: (not o.get("excellent"), o["cat"] != "prebuilt", o["price"])))
+    body = (f"<p>Βρέθηκαν <b>{len(fresh)}</b> νέες πραγματικές ευκαιρίες σε ελληνικά καταστήματα"
+            f"{f' ({n_exc} εξαιρετικές)' if n_exc else ''}. «Πραγματική» = επιβεβαιωμένη από το ιστορικό τιμών, όχι φουσκωμένη αρχική τιμή.</p>"
             f"<table style='border-collapse:collapse;font:14px system-ui'>{rows}</table>"
-            f"<p><a href='{html.escape(cfg.get('page_url', 'http://127.0.0.1:8765/'))}'>Άνοιγμα σελίδας προσφορών</a></p>")
+            f"<p><a href='{html.escape(cfg.get('page_url', 'https://kchalv.github.io/pc-deals/'))}'>Άνοιγμα σελίδας προσφορών</a></p>")
     try:
-        send_email(cfg, f"PC deals: {len(fresh)} εξαιρετικές προσφορές", body)
+        send_email(cfg, f"PC deals: {len(fresh)} νέες πραγματικές ευκαιρίες" + (f" ({n_exc} εξαιρετικές)" if n_exc else ""), body)
     except Exception as e:  # noqa: BLE001
         log(f"Email: αποτυχία αποστολής: {type(e).__name__}: {e}")
         return f"αποτυχία email: {type(e).__name__}"
@@ -803,7 +1151,7 @@ def render(wl, offers, today, email_msg, first_run):
         "fetch": [{"store": s, "url": u, "code": c, "n": n, "note": note} for s, u, c, n, note in FETCH_LOG],
         "offers": [{k: o.get(k) for k in ("store", "cat", "target", "name", "url", "price", "net", "old", "min30_store", "rrp",
                                           "rating", "reviews", "stock", "spec", "score", "stats", "series", "badges", "notes",
-                                          "excellent", "why", "real_disc", "drop_med", "tags")} for o in offers],
+                                          "excellent", "why", "opportunity", "real_disc", "drop_med", "tags")} for o in offers],
     }
     blob = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
     return PAGE_TEMPLATE.replace("__DATA__", blob)
@@ -869,7 +1217,7 @@ const $ = (s, el=document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const eur = n => n == null ? '–' : (n >= 100 ? Math.round(n).toLocaleString('el-GR') : n.toFixed(2).replace('.', ',')) + ' €';
 const ls = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } };
-const st = { tab: ls('tab') || 'pc', pcf: ls('pcf') || 'vram16', sort: ls('sort') || 'deal', q: '', store: 'all' };
+const st = { tab: ls('tab') || 'pc', pcf: ['target', 'all', 'nvidia', 'amd', 'x3d', 'exc'].includes(ls('pcf')) ? ls('pcf') : 'all', sort: ls('sort') || 'deal', q: '', store: 'all' };
 const tlabel = Object.fromEntries(D.targets.map(t => [t.key, t]));
 
 function spark(series) {
@@ -919,7 +1267,7 @@ function summary() {
   const pcs = D.offers.filter(o => o.cat === 'prebuilt'), per = D.offers.filter(o => o.cat !== 'prebuilt');
   const exc = D.offers.filter(o => o.excellent).length;
   const bfDays = D.bf.date ? Math.ceil((new Date(D.bf.date) - new Date(D.today)) / 864e5) : null;
-  return `<div class="box"><b>${pcs.length}</b> έτοιμα PC με NVIDIA RTX · <b>${per.length}</b> προσφορές περιφερειακών · <b>${exc}</b> εξαιρετικές ·
+  return `<div class="box"><b>${pcs.length}</b> έτοιμα PC (9800X3D / 7800X3D / 270K Plus / 14900K · ≥ 32 GB RAM · ≥ 16 GB VRAM) · <b>${per.length}</b> προσφορές περιφερειακών · <b>${exc}</b> εξαιρετικές ·
   ενημέρωση ${esc(D.generated)}${bfDays != null && bfDays >= 0 ? ` · Black Friday σε <b>${bfDays}</b> μέρες (${esc(D.bf.label || '')})` : ''}
   <div class="small mut" style="margin-top:4px">Email: ${D.email.ready ? 'ενεργό προς ' + esc(D.email.to) : '<b style="color:var(--warn)">δεν έχει ρυθμιστεί κωδικός SMTP (notify.json)</b>'} · ${esc(D.email.msg || '')}
   ${D.first_run ? ' · <b>Πρώτη μέρα ιστορικού</b>: ΝΕΟ / ιστορικό χαμηλό / ψεύτικη έκπτωση γεμίζουν όσο μαζεύονται τιμές.' : ''}</div></div>`;
@@ -936,7 +1284,7 @@ function pcRows(list) {
       <div class="notes">${notes}${o.stock ? ` <span>· ${esc(o.stock)}</span>` : ''}</div><div>${ext(o.name)}</div></td>
       <td>${esc(D.stores[o.store].label)}</td><td>${priceCell(o)}</td><td class="hide-m">${hist(o)}</td>
       <td class="bars"><div class="bar"><span>Fortnite</span><i class="f" style="width:${sc.fn}px"></i>${sc.fn}</div>
-        <div class="bar"><span>AI/CUDA</span><i style="width:${sc.ai}px"></i>${sc.ai}</div>
+        <div class="bar"><span>AI</span><i style="width:${sc.ai}px"></i>${sc.ai}</div>
         <div class="bar"><span>Σύνολο</span><b>${sc.total}</b>&nbsp;· αξία <b>${sc.value}</b></div></td>
       <td class="hide-m">${stars(o)}</td></tr>`;
   }).join('');
@@ -946,7 +1294,8 @@ function drawPC() {
   const stores = [...new Set(list.map(o => o.store))];
   if (st.pcf === 'target') list = list.filter(o => o.score.target);
   if (st.pcf === 'x3d') list = list.filter(o => o.spec.x3d);
-  if (st.pcf === 'vram16') list = list.filter(o => (o.spec.vram || 0) >= 16);
+  if (st.pcf === 'nvidia') list = list.filter(o => o.spec.nvidia);
+  if (st.pcf === 'amd') list = list.filter(o => o.spec.amd);
   if (st.pcf === 'exc') list = list.filter(o => o.excellent);
   if (st.store !== 'all') list = list.filter(o => o.store === st.store);
   if (st.q) { const q = st.q.toLowerCase(); list = list.filter(o => o.name.toLowerCase().includes(q)); }
@@ -956,17 +1305,18 @@ function drawPC() {
   list.sort(sorters[st.sort] || sorters.deal);
   return `${summary()}
   <div class="controls">
-   <select id="pcf"><option value="target">★ Στόχος: 9800X3D+ & RTX 5070 Ti / 5080 / 5090 / 4090</option><option value="vram16">NVIDIA ≥ 16 GB VRAM (CUDA/LLM)</option>
-     <option value="x3d">CPU X3D (Fortnite)</option><option value="exc">Μόνο εξαιρετικές</option><option value="all">Όλα τα NVIDIA RTX</option></select>
+   <select id="pcf"><option value="all">Όλα (AMD + NVIDIA)</option><option value="target">★ Στόχος: 9800X3D & RTX 5070 Ti / 5080 / 5090 / 4090 / RX 9070 XT / 7900 XTX</option>
+     <option value="nvidia">Μόνο NVIDIA (CUDA)</option><option value="amd">Μόνο AMD Radeon</option>
+     <option value="x3d">CPU X3D (Fortnite)</option><option value="exc">Μόνο εξαιρετικές</option></select>
    <select id="sort"><option value="deal">Ταξινόμηση: καλύτερη προσφορά</option><option value="value">Αξία (βαθμός / 1.000 €)</option><option value="price">Τιμή ↑</option>
-     <option value="total">Συνολικός βαθμός</option><option value="fn">Fortnite</option><option value="ai">AI / CUDA</option></select>
+     <option value="total">Συνολικός βαθμός</option><option value="fn">Fortnite</option><option value="ai">AI / local LLM</option></select>
    <select id="store"><option value="all">Όλα τα καταστήματα</option>${stores.map(s => `<option value="${s}">${esc(D.stores[s].label)}</option>`).join('')}</select>
    <input type="search" id="q" placeholder="αναζήτηση (π.χ. 5080, Omen)" value="${esc(st.q)}">
    <span class="small mut">${list.length} PC</span>
   </div>
   <table class="tbl"><thead><tr><th>PC</th><th>Κατάστημα</th><th>Τιμή</th><th class="hide-m">Ιστορικό τιμής</th><th>Βαθμολογία</th><th class="hide-m">Κριτικές</th></tr></thead>
-  <tbody>${pcRows(list) || '<tr><td colspan="6" class="mut">Κανένα PC με αυτό το φίλτρο. Δοκίμασε «Όλα τα NVIDIA RTX».</td></tr>'}</tbody></table>
-  <p class="small mut">Βαθμολογία: Fortnite = 65% CPU (X3D κορυφή) + 35% GPU · AI/CUDA = 75% VRAM + 25% GPU · Σύνολο = μέσος όρος ± RAM (64 GB +5, 16 GB −8) · Αξία = σύνολο ανά 1.000 €.</p>`;
+  <tbody>${pcRows(list) || '<tr><td colspan="6" class="mut">Κανένα PC με αυτό το φίλτρο. Δοκίμασε «Όλα (AMD + NVIDIA)».</td></tr>'}</tbody></table>
+  <p class="small mut">Βαθμολογία: Fortnite = 65% CPU (X3D κορυφή) + 35% GPU · AI = 75% VRAM + 25% GPU (AMD ×0,8: χωρίς CUDA) · Σύνολο = μέσος όρος ± RAM (64 GB +5, 16 GB −8) · Αξία = σύνολο ανά 1.000 €.</p>`;
 }
 
 // ---------------------------------------------------------------- περιφερειακά
@@ -1002,8 +1352,8 @@ function drawTop() {
   const exc = D.offers.filter(o => o.excellent);
   return summary()
     + sec('🔥 Εξαιρετικές προσφορές (στέλνουν email)', exc, o => o.cat === 'prebuilt' ? pcx(o) : (tlabel[o.target] || {}).label)
-    + sec('★ Στόχος: 9800X3D+ με RTX 5070 Ti / 5080 / 5090 – φθηνότερα', best(o => o.score.target, (a, b) => a.price - b.price), pcx)
-    + sec('Καλύτερη αξία για Fortnite + CUDA (≥ 16 GB VRAM)', best(o => (o.spec.vram || 0) >= 16, (a, b) => b.score.value - a.score.value), pcx)
+    + sec('★ Στόχος: 9800X3D με RTX 5070 Ti / 5080 / 5090 / RX 9070 XT / 7900 XTX – φθηνότερα', best(o => o.score.target, (a, b) => a.price - b.price), pcx)
+    + sec('Καλύτερη αξία για Fortnite + AI', best(o => true, (a, b) => b.score.value - a.score.value), pcx)
     + sec('Καλύτερο για local LLM (περισσότερη VRAM)', best(o => (o.spec.vram || 0) >= 24, (a, b) => a.price - b.price), pcx)
     + sec('Φθηνότερο σοβαρό PC για Fortnite (X3D)', best(o => o.spec.x3d, (a, b) => a.price - b.price), pcx)
     + sec('Περιφερειακά: χαμηλότερη τιμή ανά μοντέλο', D.targets.map(t => D.offers.filter(o => o.target === t.key).sort((a, b) => a.price - b.price)[0]).filter(Boolean), o => (tlabel[o.target] || {}).label);
@@ -1015,7 +1365,7 @@ function drawInfo() {
   const man = D.manual.map(m => `<li><a target="_blank" href="${esc(m.url)}">${esc(m.label)}</a> <span class="small mut">${esc(m.note || '')}</span></li>`).join('');
   const stores = Object.entries(D.stores).map(([k, s]) => `<li><b>${esc(s.label)}</b> <span class="small mut">${esc(s.note)}</span></li>`).join('');
   const fetch = D.fetch.map(f => `<tr><td>${esc(f.store)}</td><td><a target="_blank" href="${esc(f.url)}">${esc(f.url.slice(0, 90))}</a></td><td>${f.code}</td><td>${f.n}</td><td>${esc(f.note)}</td></tr>`).join('');
-  return `<div class="box"><h3 style="margin-top:0">Τι να αγοράσεις (Fortnite + CUDA / local LLM / AI agents)</h3><ul>${adv}</ul></div>
+  return `<div class="box"><h3 style="margin-top:0">Τι να αγοράσεις (Fortnite + local LLM / AI agents)</h3><ul>${adv}</ul></div>
   <div class="box"><h3 style="margin-top:0">Καταστήματα που διαβάζονται αυτόματα</h3><ul>${stores}</ul></div>
   <div class="box"><h3 style="margin-top:0">Χειροκίνητος έλεγχος (μπλοκάρουν αυτόματη ανάγνωση) · Black Friday σελίδες · ιστορικό τιμών</h3><ul>${man}</ul></div>
   <div class="box"><h3 style="margin-top:0">Τεχνικά: τι τραβήχτηκε</h3><table class="tbl small"><tr><th>Κατάστημα</th><th>URL</th><th>HTTP</th><th>προϊόντα</th><th></th></tr>${fetch}</table></div>`;
@@ -1064,11 +1414,11 @@ if (served) {
     setTimeout(() => checkStatus(true), 1500);
   };
 } else if (online) {
-  // online αντίγραφο (GitHub Pages): ενημερώνεται αυτόματα κάθε ώρα από τον υπολογιστή
+  // online αντίγραφο (GitHub Pages): ενημερώνεται αυτόματα κάθε 2 ώρες (GitHub Actions)
   const bm = document.querySelector('a[href="/bookmarklet"]'); if (bm) bm.style.display = 'none';
   btn.textContent = '↻ Φόρτωση νεότερης';
   btn.onclick = () => { location.href = location.pathname + '?t=' + Date.now(); };
-  status.textContent = 'online αντίγραφο · ενημερώνεται αυτόματα κάθε ώρα';
+  status.textContent = 'online αντίγραφο · ενημερώνεται αυτόματα κάθε 2 ώρες';
 } else {
   btn.disabled = true; btn.title = 'Άνοιξε τη σελίδα από http://127.0.0.1:8765/ (server.py) για ανανέωση';
   status.innerHTML = 'Ανοιχτό ως αρχείο: για ανανέωση άνοιξε <a href="http://127.0.0.1:8765/">http://127.0.0.1:8765/</a>';
@@ -1187,6 +1537,10 @@ def main():
             except (OSError, ValueError, KeyError):
                 offers, today = history_load(con, wl)
             offers = [o for o in offers if o["store"] != "import"]
+            # οι κανόνες του watchlist μπορεί να άλλαξαν από την τελευταία σάρωση
+            keys = {t["key"] for t in wl["targets"]}
+            offers = [o for o in offers if (o["cat"] == "prebuilt" and not pc_reject_reason(parse_specs(o["name"]), wl["prebuilt"]))
+                      or o["target"] in keys]
             have = {(o["store"], o["url"], o["target"]) for o in offers}
             offers += [o for o in classify(wl, load_imports(), fetch_peripherals=False)
                        if (o["store"], o["url"], o["target"]) not in have]
