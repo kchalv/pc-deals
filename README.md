@@ -122,7 +122,7 @@ python server.py                 # η σελίδα στο http://127.0.0.1:8765/
 
 ## Χρονοπρογραμματισμός
 
-- Task Scheduler **PC Deals Relay** (εγκατάσταση: `powershell -ExecutionPolicy Bypass -File install_relay_task.ps1`): κάθε 2 ώρες στο :05, `pythonw pc_deals.py --relay --log logselay.log`. Σαρώνει μόνο Plaisio / U-Case / Κωτσόβολο και κάνει push στο branch `relay`. Δεν στέλνει email.
+- Task Scheduler **PC Deals Relay** (εγκατάσταση: `powershell -ExecutionPolicy Bypass -File install_relay_task.ps1`): κάθε 2 ώρες στο :05, `pythonw pc_deals.py --relay --log logs\relay.log`. Σαρώνει μόνο Plaisio / U-Case / Κωτσόβολο και κάνει push στο branch `relay`. Δεν στέλνει email.
 
 ```
 schtasks /run /tn "PC Deals Relay"
