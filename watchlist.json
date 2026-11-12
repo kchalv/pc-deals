@@ -26,6 +26,7 @@
     "target_gpus": ["5070 ti", "5080", "5090", "4090", "rx 9070 xt", "rx 7900 xtx"],
     "sources": [
       {"store": "plaisio",  "kind": "plaisio",    "arg": "https://www.plaisio.gr/list/pc-perifereiaka/desktops/gaming-desktops"},
+      {"store": "plaisio",  "kind": "plaisio",    "arg": "https://www.plaisio.gr/list/pc-perifereiaka/desktops/statusFlags--BlackFriday"},
       {"store": "eshop",    "kind": "eshop_list", "arg": "https://www.e-shop.gr/ypologistes-desktops-list?table=PER&category=%C5%D0%C9%D4%D1%C1%D0%C5%C6%C9%CF%C9+%D5%D0%CF%CB%CF%C3%C9%D3%D4%C5%D3&category2=GAMER"},
       {"store": "egate",    "kind": "egate",      "arg": "gaming desktop pc", "pages": 8},
       {"store": "egate",    "kind": "egate",      "arg": "9800x3d", "pages": 3},
@@ -55,14 +56,18 @@
   },
   "peripheral_categories": {
     "plaisio": {
-      "monitor": "https://www.plaisio.gr/list/pc-perifereiaka/othones/oles-oi-othones",
-      "keyboard": "https://www.plaisio.gr/list/pc-perifereiaka/perifereiaka-pc/pliktrologia",
-      "mouse": "https://www.plaisio.gr/list/pc-perifereiaka/perifereiaka-pc/pontikia-mousepads"
+      "_help": "κάθε κατηγορία: μία ή περισσότερες λίστες· οι λίστες /statusFlags--BlackFriday φέρνουν όλες τις προσφορές BF (η κανονική λίστα κόβεται στις 12 σελίδες)",
+      "monitor": ["https://www.plaisio.gr/list/pc-perifereiaka/othones/oles-oi-othones/statusFlags--BlackFriday",
+                  "https://www.plaisio.gr/list/pc-perifereiaka/othones/oles-oi-othones"],
+      "keyboard": ["https://www.plaisio.gr/list/pc-perifereiaka/perifereiaka-pc/pliktrologia/statusFlags--BlackFriday",
+                   "https://www.plaisio.gr/list/pc-perifereiaka/perifereiaka-pc/pliktrologia"],
+      "mouse": ["https://www.plaisio.gr/list/pc-perifereiaka/perifereiaka-pc/pontikia-mousepads/statusFlags--BlackFriday",
+                "https://www.plaisio.gr/list/pc-perifereiaka/perifereiaka-pc/pontikia-mousepads"]
     }
   },
   "peripheral_search_stores": ["eshop", "germanos", "egate", "praxi", "ucase", "tetrabyte", "iabox", "mgmanager", "kpl", "kotsovolos"],
   "relay": {
-    "_help": "Καταστήματα που απαντούν 403 στους servers του GitHub: τα σαρώνει ο τοπικός υπολογιστής (pc_deals.py --relay, Task Scheduler κάθε 2 ώρες) και το GitHub τα ενσωματώνει αν είναι νεότερα από max_age_h ώρες.",
+    "_help": "Καταστήματα που απαντούν 403 στους servers του GitHub: τα σαρώνει ο τοπικός υπολογιστής (pc_deals.py --relay, Task Scheduler κάθε ώρα) και το GitHub τα ενσωματώνει αν είναι νεότερα από max_age_h ώρες.",
     "stores": ["plaisio", "ucase", "kotsovolos"],
     "max_age_h": 5
   },
@@ -86,7 +91,7 @@
     "prebuilt_min_score": 55,
     "prebuilt_target_max_price": {"5070 ti": 2799, "5080": 3399, "4090": 4499, "5090": 5499, "rx 9070 xt": 2399, "rx 7900 xtx": 2899},
     "peripheral_below_ref": 0.12,
-    "_email_help": "Το email (κάθε 2 ώρες) περιέχει τις ΝΕΕΣ πραγματικές ευκαιρίες: εξαιρετικές + επιβεβαιωμένες εκπτώσεις ≥ email_real_discount_min + νέα ιστορικά χαμηλά (≥3 μέρες ιστορικό, ≥2% κάτω).",
+    "_email_help": "Το email (κάθε ώρα) περιέχει τις ΝΕΕΣ πραγματικές ευκαιρίες: εξαιρετικές + επιβεβαιωμένες εκπτώσεις ≥ email_real_discount_min + νέα ιστορικά χαμηλά (≥3 μέρες ιστορικό, ≥2% κάτω).",
     "email_real_discount_min": 0.05,
     "email_new_low": true
   },

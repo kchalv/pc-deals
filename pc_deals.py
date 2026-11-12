@@ -2,7 +2,7 @@
 Σκάνερ προσφορών ΕΛΛΗΝΙΚΩΝ καταστημάτων: έτοιμα gaming PC (Fortnite + CUDA / local LLM / AI agents)
 και, σε ξεχωριστή λίστα, περιφερειακά (ποντίκι, πληκτρολόγιο, οθόνη).
 
-Σε κάθε εκτέλεση (κάθε 2 ώρες από το GitHub Actions ή με το κουμπί «Ανανέωση» της σελίδας):
+Σε κάθε εκτέλεση (κάθε ώρα από το GitHub Actions ή με το κουμπί «Ανανέωση» της σελίδας):
   1. Τραβάει τιμές από ελληνικά καταστήματα που απαντούν σε απλό HTTP (χωρίς bot-bypass):
        Plaisio (κατηγορίες + αστέρια/κριτικές), e-shop.gr (λίστα GAMER με «ελάχιστη 30 ημερών»),
        e-gate (αναζήτηση), msystems (αναζήτηση), Germanos (αναζήτηση περιφερειακών).
@@ -790,9 +790,16 @@ def fetch_raw(wl):
             pc_raw += PC_SOURCES[kind](arg, max_pages=src.get("pages", 1))
     log("Περιφερειακά (λήψη):")
     if want("plaisio"):
-        for cat_key, url in wl["peripheral_categories"]["plaisio"].items():
+        for cat_key, urls in wl["peripheral_categories"]["plaisio"].items():
+            if cat_key.startswith("_"):
+                continue
             log(f"  plaisio   {cat_key}")
-            per_raw += [dict(o, _cat=cat_key) for o in plaisio_category(url)]
+            seen = set()   # η λίστα Black Friday και η κανονική λίστα έχουν κοινά προϊόντα
+            for url in [urls] if isinstance(urls, str) else urls:
+                for o in plaisio_category(url):
+                    if o["url"] not in seen:
+                        seen.add(o["url"])
+                        per_raw.append(dict(o, _cat=cat_key))
     for t in wl["targets"]:
         for sk in wl["peripheral_search_stores"]:
             if want(sk):
@@ -867,8 +874,14 @@ def relay_push():
         shutil.rmtree(d, onerror=lambda f, p, _: (os.chmod(p, 0o700), f(p)))
     d.mkdir(parents=True)
     shutil.copy(RELAY_FILE, d / "relay.json")
+    files = ["relay.json"]
+    trigger = BASE / ".github" / "relay-trigger.yml"   # το push ξεκινά αμέσως τη σάρωση στο GitHub (με email)
+    if trigger.exists():
+        (d / ".github" / "workflows").mkdir(parents=True)
+        shutil.copy(trigger, d / ".github" / "workflows" / "trigger.yml")
+        files.append(".github/workflows/trigger.yml")
     run("init", "-q", "-b", "relay", cwd=d)
-    run("add", "relay.json", cwd=d)
+    run("add", *files, cwd=d)
     run("-c", "user.name=pc-deals relay", "-c", "user.email=relay@users.noreply.github.com",
         "commit", "-q", "-m", f"relay {dt.datetime.now():%Y-%m-%d %H:%M}", cwd=d)
     r = run("push", "-q", "-f", remote, "relay", cwd=d)
@@ -1111,7 +1124,7 @@ def assess(o, wl, today):
     o["why"] = why
     if why:
         badges.insert(0, ["exc", "ΕΞΑΙΡΕΤΙΚΗ"])
-    # ---- «πραγματική ευκαιρία» για το email (κάθε 2 ώρες): εξαιρετική, επιβεβαιωμένη έκπτωση, ή νέο ιστορικό χαμηλό
+    # ---- «πραγματική ευκαιρία» για το email (κάθε ώρα): εξαιρετική, επιβεβαιωμένη έκπτωση, ή νέο ιστορικό χαμηλό
     opp = list(why)
     if not opp and not unavailable:
         if real is True and disc and disc >= al.get("email_real_discount_min", 0.05):
@@ -1497,11 +1510,11 @@ if (served) {
     setTimeout(() => checkStatus(true), 1500);
   };
 } else if (online) {
-  // online αντίγραφο (GitHub Pages): ενημερώνεται αυτόματα κάθε 2 ώρες (GitHub Actions)
+  // online αντίγραφο (GitHub Pages): ενημερώνεται αυτόματα κάθε ώρα (GitHub Actions)
   const bm = document.querySelector('a[href="/bookmarklet"]'); if (bm) bm.style.display = 'none';
   btn.textContent = '↻ Φόρτωση νεότερης';
   btn.onclick = () => { location.href = location.pathname + '?t=' + Date.now(); };
-  status.textContent = 'online αντίγραφο · ενημερώνεται αυτόματα κάθε 2 ώρες';
+  status.textContent = 'online αντίγραφο · ενημερώνεται αυτόματα κάθε ώρα';
 } else {
   btn.disabled = true; btn.title = 'Άνοιξε τη σελίδα από http://127.0.0.1:8765/ (server.py) για ανανέωση';
   status.innerHTML = 'Ανοιχτό ως αρχείο: για ανανέωση άνοιξε <a href="http://127.0.0.1:8765/">http://127.0.0.1:8765/</a>';

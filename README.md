@@ -1,16 +1,16 @@
 # PC deals: έτοιμα gaming PC & περιφερειακά από ελληνικά καταστήματα
 
-Σελίδα: **http://127.0.0.1:8765/** (κουμπί «↻ Ανανέωση τιμών»). Σάρωση **κάθε 2 ώρες** και email με τις νέες πραγματικές ευκαιρίες (αν υπάρχουν).
+Σελίδα: **http://127.0.0.1:8765/** (κουμπί «↻ Ανανέωση τιμών»). Σάρωση **κάθε ώρα** και email με τις νέες πραγματικές ευκαιρίες (αν υπάρχουν).
 
 ## Online (GitHub Actions + Pages)
 
 - Σελίδα: **https://kchalv.github.io/pc-deals/**, repo `kchalv/pc-deals` (δημόσιο).
-- Το `.github/workflows/scan.yml` τρέχει τη σάρωση **κάθε 2 ώρες στο GitHub** (:17 UTC), στέλνει τα email και ανεβάζει τη σελίδα. Δεν χρειάζεται ανοιχτός υπολογιστής.
+- Το `.github/workflows/scan.yml` τρέχει τη σάρωση **κάθε ώρα στο GitHub** (:17 UTC), στέλνει τα email και ανεβάζει τη σελίδα. Δεν χρειάζεται ανοιχτός υπολογιστής.
 - Ρυθμίσεις email: secret `NOTIFY_JSON` (ίδιο με το `notify.json`, που δεν ανεβαίνει). Το ιστορικό τιμών μένει στο branch `data`.
 - Χειροκίνητα: Actions → scan → Run workflow (επιλογές: email, δοκιμαστικό email).
 - Κάθε push στο `main` που αλλάζει `pc_deals.py` / `watchlist.json` / το workflow κάνει αμέσως σάρωση και deploy (χωρίς email).
 - Τοπικά: το task «PC Deals Hourly» είναι **απενεργοποιημένο**, για να μη στέλνονται διπλά email. Το κουμπί ανανέωσης στο 127.0.0.1 σαρώνει χωρίς email.
-- **Plaisio, U-Case, Κωτσόβολος** απαντούν 403 στους servers του GitHub. Τα σαρώνει ο υπολογιστής σου (task **PC Deals Relay**, κάθε 2 ώρες στο :05, `pythonw pc_deals.py --relay`) και ανεβάζει μόνο τα προϊόντα στο branch `relay`. Το GitHub τα ενσωματώνει αν είναι νεότερα από 5 ώρες (`watchlist.json` → `relay`). Email στέλνει **μόνο** το GitHub. Αν ο υπολογιστής είναι κλειστός, η σελίδα απλώς δεν έχει αυτά τα 3 καταστήματα.
+- **Plaisio, U-Case, Κωτσόβολος** απαντούν 403 στους servers του GitHub. Τα σαρώνει ο υπολογιστής σου (task **PC Deals Relay**, κάθε ώρα στο :05, `pythonw pc_deals.py --relay`) και ανεβάζει μόνο τα προϊόντα στο branch `relay`. Το GitHub τα ενσωματώνει αν είναι νεότερα από 5 ώρες (`watchlist.json` → `relay`). Email στέλνει **μόνο** το GitHub. Κάθε push στο `relay` ξεκινά αμέσως και τη σάρωση στο GitHub (workflow `relay-trigger`, από το `.github/relay-trigger.yml`), γιατί το GitHub παραλείπει συχνά τα scheduled runs· το cron μένει ως εφεδρεία όταν ο υπολογιστής είναι κλειστός. Αν ο υπολογιστής είναι κλειστός, η σελίδα απλώς δεν έχει αυτά τα 3 καταστήματα.
 - Αν αλλάξεις τον κωδικό του email: ενημέρωσε το `notify.json` και ξαναβάλε το secret (`gh secret set NOTIFY_JSON`).
 
 ## Τι κάνει
@@ -73,7 +73,7 @@
 
 Το bookmarklet διαβάζει γενικά τις κάρτες προϊόντων (link + τιμή σε €). Αν κάποιο site αλλάξει εμφάνιση και δεν βρει προϊόντα, θα βγάλει μήνυμα.
 
-## Email κάθε 2 ώρες: νέες πραγματικές ευκαιρίες
+## Email κάθε ώρα: νέες πραγματικές ευκαιρίες
 
 Ρύθμιση στο `notify.json` (δεν ανεβαίνει στο GitHub· εκεί υπάρχει ως secret `NOTIFY_JSON`). **Χρειάζεται τον κωδικό**:
 συμπλήρωσε `smtp_password` ή όρισε τη μεταβλητή περιβάλλοντος `PC_DEALS_SMTP_PASSWORD`. Δοκιμή:
@@ -86,7 +86,7 @@ python pc_deals.py --test-email
 
 Αν το Python βγάζει `SSLError` σε δίκτυο με έλεγχο TLS (εταιρικό proxy): `pip install truststore`. Το `pc_deals.py` το χρησιμοποιεί αυτόματα, ώστε να εμπιστεύεται τα πιστοποιητικά των Windows.
 
-Κάθε 2 ώρες φεύγει email **μόνο αν υπάρχουν νέες** ευκαιρίες. Ευκαιρία είναι κάθε διαθέσιμο προϊόν που ισχύει ένα από τα παρακάτω:
+Κάθε ώρα φεύγει email **μόνο αν υπάρχουν νέες** ευκαιρίες. Ευκαιρία είναι κάθε διαθέσιμο προϊόν που ισχύει ένα από τα παρακάτω:
 
 - είναι «ΕΞΑΙΡΕΤΙΚΗ» (βλ. παρακάτω)
 - έχει **πραγματική** έκπτωση ≥ 5%, επιβεβαιωμένη από το ιστορικό ή το 30ήμερο χαμηλό του καταστήματος, όχι φουσκωμένη αρχική τιμή (`email_real_discount_min`)
@@ -126,7 +126,7 @@ python server.py                 # η σελίδα στο http://127.0.0.1:8765/
 
 ## Χρονοπρογραμματισμός
 
-- Task Scheduler **PC Deals Relay** (εγκατάσταση: `powershell -ExecutionPolicy Bypass -File install_relay_task.ps1`): κάθε 2 ώρες στο :05, `pythonw pc_deals.py --relay --log logs\relay.log`. Σαρώνει μόνο Plaisio / U-Case / Κωτσόβολο και κάνει push στο branch `relay`. Δεν στέλνει email.
+- Task Scheduler **PC Deals Relay** (εγκατάσταση: `powershell -ExecutionPolicy Bypass -File install_relay_task.ps1`): κάθε ώρα στο :05, `pythonw pc_deals.py --relay --log logs\relay.log`. Σαρώνει μόνο Plaisio / U-Case / Κωτσόβολο και κάνει push στο branch `relay`. Δεν στέλνει email.
 
 ```
 schtasks /run /tn "PC Deals Relay"

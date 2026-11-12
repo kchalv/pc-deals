@@ -1,11 +1,11 @@
-# Σάρωση κάθε 2 ώρες στο GitHub: τιμές από ελληνικά καταστήματα -> email με τις ΝΕΕΣ πραγματικές ευκαιρίες
+# Σάρωση κάθε ώρα στο GitHub: τιμές από ελληνικά καταστήματα -> email με τις ΝΕΕΣ πραγματικές ευκαιρίες
 # (αν υπάρχουν) -> GitHub Pages. Το ιστορικό τιμών (history.sqlite) κρατιέται στο branch "data".
 # Ρυθμίσεις email: secret NOTIFY_JSON (ίδιο περιεχόμενο με το τοπικό notify.json).
 name: scan
 
 on:
   schedule:
-    - cron: "17 */2 * * *"   # κάθε 2 ώρες (UTC, :17)· το GitHub μπορεί να καθυστερήσει λίγα λεπτά
+    - cron: "17 * * * *"     # κάθε ώρα (UTC, :17)· το GitHub μπορεί να καθυστερήσει λίγα λεπτά
   push:                      # deploy αμέσως μετά από αλλαγή κώδικα/ρυθμίσεων (χωρίς email)
     branches: [main]
     paths: ["pc_deals.py", "watchlist.json", ".github/workflows/scan.yml"]
