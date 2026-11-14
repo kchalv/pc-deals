@@ -1,0 +1,19 @@
+# Αντιγράφεται από το pc_deals.py (relay_push) στο branch "relay" ως .github/workflows/trigger.yml.
+# Κάθε push του τοπικού relay (κάθε ώρα) ξεκινά αμέσως τη σάρωση στο main με email, γιατί το GitHub
+# παραλείπει συχνά τα scheduled runs. Το cron του scan.yml μένει ως εφεδρεία όταν ο υπολογιστής είναι κλειστός.
+name: relay-trigger
+
+on:
+  push:
+    branches: [relay]
+
+permissions:
+  actions: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run scan.yml --repo "${{ github.repository }}" --ref main -f email=true
