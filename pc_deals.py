@@ -55,6 +55,7 @@ DB = BASE / "history.sqlite"
 OLD_DB = BASE / "pc_deals.sqlite"
 REPORTS = BASE / "reports"
 WATCHLIST = BASE / "watchlist.json"
+BUILD = BASE / "build.json"   # custom build (χειροκίνητες τιμές από Plaisio / Skroutz / Amazon.de)
 NOTIFY = BASE / "notify.json"
 LOCK = REPORTS / ".scan.lock"
 STATUS = REPORTS / "status.json"
@@ -1244,6 +1245,7 @@ def render(wl, offers, today, email_msg, first_run):
         "manual": wl["manual_links"],
         "advice": wl["advice"],
         "bf": wl.get("black_friday", {}),
+        "build": json.loads(BUILD.read_text(encoding="utf-8")) if BUILD.exists() else None,
         "fetch": [{"store": s, "url": u, "code": c, "n": n, "note": note} for s, u, c, n, note in FETCH_LOG],
         "offers": [{k: o.get(k) for k in ("store", "cat", "target", "name", "url", "price", "net", "old", "min30_store", "rrp",
                                           "rating", "reviews", "stock", "spec", "score", "stats", "series", "badges", "notes",
@@ -1354,7 +1356,7 @@ function dealKey(o) { // μικρότερο = καλύτερη προσφορά
 }
 
 // ---------------------------------------------------------------- tabs
-const TABS = [['pc', 'Έτοιμα PC'], ['per', 'Ποντίκι · Πληκτρολόγιο · Οθόνη'], ['top', 'Κορυφαίες προσφορές'], ['info', 'Οδηγός & καταστήματα']];
+const TABS = [['pc', 'Έτοιμα PC'], ['build', 'Custom build (εξαρτήματα)'], ['per', 'Ποντίκι · Πληκτρολόγιο · Οθόνη'], ['top', 'Κορυφαίες προσφορές'], ['info', 'Οδηγός & καταστήματα']];
 function drawTabs() {
   $('#tabs').innerHTML = TABS.map(([k, l]) => `<span class="tab ${st.tab === k ? 'on' : ''}" data-k="${k}">${l}</span>`).join('');
   document.querySelectorAll('.tab').forEach(t => t.onclick = () => { st.tab = t.dataset.k; ls('tab', st.tab); draw(); });
@@ -1455,6 +1457,27 @@ function drawTop() {
     + sec('Περιφερειακά: χαμηλότερη τιμή ανά μοντέλο', D.targets.map(t => D.offers.filter(o => o.target === t.key).sort((a, b) => a.price - b.price)[0]).filter(Boolean), o => (tlabel[o.target] || {}).label);
 }
 
+// ---------------------------------------------------------------- custom build
+function drawBuild() {
+  const B = D.build;
+  if (!B) return '<div class="box">Δεν υπάρχει build.json.</div>';
+  const total = B.parts.reduce((s, p) => s + p.price, 0);
+  const alts = p => (p.alts || []).map(a => `<a target="_blank" href="${esc(a[2])}">${esc(a[0])} ${eur(a[1])}</a>`).join(' · ');
+  const rows = B.parts.map(p => `<tr><td><b>${esc(p.part)}</b></td>
+    <td><a target="_blank" href="${esc(p.url)}">${esc(p.name)}</a><div class="notes">${esc(p.why || '')}</div>${p.alts && p.alts.length ? `<div class="small" style="margin-top:3px"><span class="mut">Αλλού:</span> ${alts(p)}</div>` : ''}</td>
+    <td>${esc(p.store)}</td><td><div class="price">${eur(p.price)}</div>${p.old ? `<div class="old">${eur(p.old)}</div>` : ''}</td></tr>`).join('');
+  const opts = B.options.map(o => `<tr><td><a target="_blank" href="${esc(o.url)}">${esc(o.label)}</a><div class="notes">${esc(o.note)}</div><div class="small mut">${esc(o.price_note)}</div></td>
+    <td class="price" style="color:${o.delta < 0 ? 'var(--good)' : 'var(--bad)'}">${o.delta < 0 ? '−' : '+'}${eur(Math.abs(o.delta))}</td><td class="price">${eur(total + o.delta)}</td></tr>`).join('');
+  const cases = B.cases.map(c => `<div class="card"><h4><a target="_blank" href="${esc(c.url)}">${esc(c.name)}</a></h4>
+    <div class="price">${eur(c.price)}</div><div class="small mut">${esc(c.store)} · ${esc(c.fans)}</div><div class="notes">${esc(c.verdict)}</div></div>`).join('');
+  return `<div class="box"><h3 style="margin:0 0 4px">${esc(B.title)}</h3><div class="small mut">${esc(B.intro)} Έλεγχος τιμών: <b>${esc(B.checked)}</b>.</div></div>
+  <table class="tbl"><tr><th>Εξάρτημα</th><th>Προϊόν</th><th>Κατάστημα</th><th>Τιμή</th></tr>${rows}
+  <tr><td colspan="3" style="text-align:right"><b>Σύνολο</b></td><td><div class="price" style="font-size:18px">${eur(total)}</div></td></tr></table>
+  <div class="grp"><h3>Εναλλακτικές επιλογές (πώς αλλάζει το σύνολο)</h3><table class="tbl"><tr><th>Αλλαγή</th><th>Διαφορά</th><th>Νέο σύνολο</th></tr>${opts}</table></div>
+  <div class="grp"><h3>Εντυπωσιακά κουτιά (γυάλινα / RGB / «vision»)</h3><div class="cards">${cases}</div></div>
+  <div class="box"><ul style="margin:0;padding-left:18px">${B.notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul></div>`;
+}
+
 // ---------------------------------------------------------------- οδηγός
 function drawInfo() {
   const adv = D.advice.map(a => `<li>${esc(a)}</li>`).join('');
@@ -1470,7 +1493,7 @@ function drawInfo() {
 function draw() {
   drawTabs();
   const v = $('#view');
-  v.innerHTML = st.tab === 'pc' ? drawPC() : st.tab === 'per' ? drawPer() : st.tab === 'top' ? drawTop() : drawInfo();
+  v.innerHTML = st.tab === 'pc' ? drawPC() : st.tab === 'build' ? drawBuild() : st.tab === 'per' ? drawPer() : st.tab === 'top' ? drawTop() : drawInfo();
   if (st.tab === 'pc') {
     $('#pcf').value = st.pcf; $('#sort').value = st.sort; $('#store').value = st.store;
     $('#pcf').onchange = e => { st.pcf = e.target.value; ls('pcf', st.pcf); draw(); };
