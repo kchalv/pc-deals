@@ -3,84 +3,293 @@
   "title": "Custom build για Fortnite: Ryzen 7 9800X3D + RX 9070 XT 16 GB + 32 GB DDR5",
   "intro": "Τιμές από Plaisio, Skroutz (χαμηλότερη τιμή) και Amazon.de, όπως ήταν στις 18/11/2026. Δεν ενημερώνονται αυτόματα (το Skroutz και το Amazon δεν επιτρέπουν αυτόματη ανάγνωση), οπότε έλεγξε την τιμή στο link πριν αγοράσεις. Στο Amazon.de η τελική τιμή για Ελλάδα (ΦΠΑ 24% και μεταφορικά) φαίνεται στο καλάθι.",
   "parts": [
-    {"part": "Επεξεργαστής", "name": "AMD Ryzen 7 9800X3D (box)", "store": "Amazon.de", "price": 382.42,
-     "url": "https://www.amazon.de/dp/B0DKFMSMYK",
-     "why": "Ο πιο γρήγορος επεξεργαστής για Fortnite (3D V-Cache). Τον πουλάει απευθείας το Amazon, φθηνότερα από Skroutz και Plaisio.",
-     "alts": [["Skroutz", 394.73, "https://www.skroutz.gr/s/58448602/AMD-Ryzen-7-9800X3D-4-7GHz-Epexergastis-8-Pyrinon-gia-Socket-AM5-Tray.html"],
-              ["Plaisio", 449.00, "https://www.plaisio.gr/product/anavathmisi-diktia/anavathmisi-pc/epeksergastes/amd-cpu-ryzen-7-9800x3d-am5-4-dot-7-ghz-96-mb_4666658"]]},
-    {"part": "Κάρτα γραφικών", "name": "Sapphire Radeon RX 9070 XT Pulse 16 GB", "store": "Plaisio", "price": 949.00, "old": 1099.00,
-     "url": "https://www.plaisio.gr/product/anavathmisi-diktia/anavathmisi-pc/kartes-grafikon/sapphire-vga-radeon-rx-9070-xt-pulse-16-gb_4699467",
-     "why": "Περίπου 400 € φθηνότερη από τη φθηνότερη RTX 5070 Ti, με παρόμοια απόδοση στο Fortnite. Η Pulse είναι αθόρυβη και ψύχεται καλά.",
-     "alts": [["Skroutz (ASRock Challenger)", 938.99, "https://www.skroutz.gr/s/64224661/p.html"],
-              ["Skroutz (Sapphire Pulse)", 999.79, "https://www.skroutz.gr/s/59201716/p.html"],
-              ["Amazon.de (Gigabyte Gaming OC)", 1012.83, "https://www.amazon.de/dp/B0DT7B79K9"]]},
-    {"part": "Μητρική", "name": "Gigabyte B850 AORUS Elite WIFI7 Ice (λευκή)", "store": "Amazon.de", "price": 159.43,
-     "url": "https://www.amazon.de/dp/B0DQM7H82V",
-     "why": "Καλά VRM για X3D, WiFi 7, 4× M.2. Λευκή, για να ταιριάζει με λευκό κουτί.",
-     "alts": [["Amazon.de (μαύρη)", 168.23, "https://www.amazon.de/dp/B0DQM8GPR7"],
-              ["Amazon.de (Asus TUF B850-Plus WiFi)", 161.50, "https://www.amazon.de/dp/B0DP5DQPRC"],
-              ["Skroutz (Gigabyte, μαύρη)", 208.90, "https://www.skroutz.gr/s/58239538/p.html"],
-              ["Plaisio (Asus TUF B850-E WiFi)", 159.00, "https://www.plaisio.gr/search?query=B850%20TUF"]]},
-    {"part": "Μνήμη RAM", "name": "Patriot Viper Venom RGB 32 GB (2×16) DDR5-6000 CL30", "store": "Amazon.de", "price": 536.99,
-     "url": "https://www.amazon.de/dp/B0D4NLTM6R",
-     "why": "6000 CL30 είναι η ιδανική ταχύτητα για Ryzen. Οι μνήμες είναι πολύ ακριβές αυτή την περίοδο. Η έκδοση χωρίς RGB κοστίζει 526,99 €. Στο Amazon την πουλάει τρίτος πωλητής (GadgetLifestyle) και την αποστέλλει το Amazon.",
-     "alts": [["Amazon.de (χωρίς RGB)", 526.99, "https://www.amazon.de/dp/B0D4NLSP87"],
-              ["Skroutz (χωρίς RGB)", 535.90, "https://www.skroutz.gr/s/48887375/p.html"],
-              ["Skroutz (RGB)", 559.90, "https://www.skroutz.gr/s/56360724/p.html"],
-              ["Plaisio (Corsair Vengeance RGB)", 699.00, "https://www.plaisio.gr/list/anavathmisi-diktia/anavathmisi-pc/mnimes-ram"]]},
-    {"part": "SSD", "name": "KIOXIA Exceria Plus G3 NVMe 2 TB", "store": "Plaisio", "price": 259.00, "old": 319.99,
-     "url": "https://www.plaisio.gr/product/anavathmisi-diktia/storage/diskoi-ssd-hdd/kioxia-ssd-exceria-plus-g3-nvme-m-dot-2-2tb_4339584",
-     "why": "2 TB χωράνε άνετα Fortnite και άλλα παιχνίδια. Με 1 TB (περίπου 160 €) γλιτώνεις περίπου 100 €.",
-     "alts": [["Skroutz (Kingston NV3 2 TB)", 259.32, "https://www.skroutz.gr/s/55365010/p.html"],
-              ["Amazon.de (Crucial P310 1 TB)", 166.72, "https://www.amazon.de/dp/B0DC8VPSHV"],
-              ["Skroutz (WD SN7100 2 TB)", 360.63, "https://www.skroutz.gr/s/58383162/p.html"]]},
-    {"part": "Ψύξη CPU", "name": "Arctic Liquid Freezer III Pro 360 A-RGB", "store": "Skroutz", "price": 84.65,
-     "url": "https://www.skroutz.gr/s/59894502/p.html",
-     "why": "Από τις καλύτερες υδροψύξεις 360 mm σε σχέση με την τιμή, με A-RGB ανεμιστήρες για το γυάλινο κουτί.",
-     "alts": [["Skroutz (χωρίς RGB)", 73.90, "https://www.skroutz.gr/s/59894538/p.html"],
-              ["Plaisio (χωρίς RGB)", 84.90, "https://www.plaisio.gr/product/anavathmisi-diktia/anavathmisi-pc/anemistirakia-psiktres/arctic-cooling-cpu-cooler-arctic-liquid-freezer-iii-pro-360-black_4893204"],
-              ["Amazon.de (αερόψυξη Peerless Assassin 120 SE ARGB)", 34.79, "https://www.amazon.de/dp/B09NSCCYHH"]]},
-    {"part": "Τροφοδοτικό", "name": "Corsair RM850e (2025) 850W Gold, ATX 3.1", "store": "Amazon.de", "price": 86.48,
-     "url": "https://www.amazon.de/dp/B0DMTN5WLB",
-     "why": "Αρθρωτό, αθόρυβο, με καλώδιο 12V-2x6, οπότε σηκώνει και μελλοντική αναβάθμιση κάρτας. 850W αφήνουν άνετο περιθώριο.",
-     "alts": [["Plaisio (Gigabyte PG5 850W)", 89.90, "https://www.plaisio.gr/product/anavathmisi-diktia/anavathmisi-pc/trofodotika/psu-gigabyte-850w-80-plus-gold-modular-pg5_5023114"],
-              ["Skroutz (be quiet! Pure Power 12 850W)", 70.00, "https://www.skroutz.gr/s/57376082/p.html"]]},
-    {"part": "Κουτί", "name": "Thermalright A70 Vision White (γυαλί 270°, οθόνη 9,16\")", "store": "Amazon.de", "price": 114.70,
-     "url": "https://www.amazon.de/dp/B0GHYJF25F",
-     "why": "Γυαλί σε τρεις πλευρές χωρίς κολόνα και ενσωματωμένη οθόνη 1920×480. Χωράει κάρτες έως 420 mm. Δεν έχει ανεμιστήρες, γι' αυτό υπάρχει η επόμενη γραμμή. Νέο μοντέλο με λίγες κριτικές (5,0 ★ από 9).",
-     "alts": []},
-    {"part": "Ανεμιστήρες", "name": "2× Thermalright TL-C12C-S X3 ARGB (6 ανεμιστήρες 120 mm)", "store": "Amazon.de", "price": 26.24,
-     "url": "https://www.amazon.de/dp/B0G4JQBL67",
-     "why": "Στο κάτω μέρος και στο πλάι, ενώ το ψυγείο 360 mm μπαίνει πάνω. 13,12 € το πακέτο των 3.",
-     "alts": []}
+    {
+      "part": "Επεξεργαστής",
+      "name": "AMD Ryzen 7 9800X3D (box)",
+      "store": "Amazon.de",
+      "price": 382.42,
+      "url": "https://www.amazon.de/dp/B0DKFMSMYK",
+      "why": "Ο πιο γρήγορος επεξεργαστής για Fortnite (3D V-Cache). Τον πουλάει απευθείας το Amazon, φθηνότερα από Skroutz και Plaisio.",
+      "alts": [
+        [
+          "Skroutz",
+          394.73,
+          "https://www.skroutz.gr/s/58448602/AMD-Ryzen-7-9800X3D-4-7GHz-Epexergastis-8-Pyrinon-gia-Socket-AM5-Tray.html"
+        ],
+        [
+          "Plaisio",
+          449.0,
+          "https://www.plaisio.gr/product/anavathmisi-diktia/anavathmisi-pc/epeksergastes/amd-cpu-ryzen-7-9800x3d-am5-4-dot-7-ghz-96-mb_4666658"
+        ]
+      ]
+    },
+    {
+      "part": "Κάρτα γραφικών",
+      "name": "Sapphire Radeon RX 9070 XT Pulse 16 GB",
+      "store": "Plaisio",
+      "price": 949.0,
+      "old": 1099.0,
+      "url": "https://www.plaisio.gr/product/anavathmisi-diktia/anavathmisi-pc/kartes-grafikon/sapphire-vga-radeon-rx-9070-xt-pulse-16-gb_4699467",
+      "why": "Περίπου 400 € φθηνότερη από τη φθηνότερη RTX 5070 Ti, με παρόμοια απόδοση στο Fortnite. Η Pulse είναι αθόρυβη και ψύχεται καλά.",
+      "alts": [
+        [
+          "Skroutz (ASRock Challenger)",
+          938.99,
+          "https://www.skroutz.gr/s/64224661/p.html"
+        ],
+        [
+          "Skroutz (Sapphire Pulse)",
+          999.79,
+          "https://www.skroutz.gr/s/59201716/p.html"
+        ],
+        [
+          "Amazon.de (Gigabyte Gaming OC)",
+          1012.83,
+          "https://www.amazon.de/dp/B0DT7B79K9"
+        ]
+      ]
+    },
+    {
+      "part": "Μητρική",
+      "name": "Gigabyte B850 AORUS Elite WIFI7 Ice (λευκή)",
+      "store": "Amazon.de",
+      "price": 159.43,
+      "url": "https://www.amazon.de/dp/B0DQM7H82V",
+      "why": "Καλά VRM για X3D, WiFi 7, 4× M.2. Λευκή, για να ταιριάζει με λευκό κουτί.",
+      "alts": [
+        [
+          "Amazon.de (μαύρη)",
+          168.23,
+          "https://www.amazon.de/dp/B0DQM8GPR7"
+        ],
+        [
+          "Amazon.de (Asus TUF B850-Plus WiFi)",
+          161.5,
+          "https://www.amazon.de/dp/B0DP5DQPRC"
+        ],
+        [
+          "Skroutz (Gigabyte, μαύρη)",
+          208.9,
+          "https://www.skroutz.gr/s/58239538/p.html"
+        ],
+        [
+          "Plaisio (Asus TUF B850-E WiFi)",
+          159.0,
+          "https://www.plaisio.gr/search?query=B850%20TUF"
+        ]
+      ]
+    },
+    {
+      "part": "Μνήμη RAM",
+      "name": "Patriot Viper Venom RGB 32 GB (2×16) DDR5-6000 CL30",
+      "store": "Amazon.de",
+      "price": 536.99,
+      "url": "https://www.amazon.de/dp/B0D4NLTM6R",
+      "why": "6000 CL30 είναι η ιδανική ταχύτητα για Ryzen. Οι μνήμες είναι πολύ ακριβές αυτή την περίοδο. Η έκδοση χωρίς RGB κοστίζει 526,99 €. Στο Amazon την πουλάει τρίτος πωλητής (GadgetLifestyle) και την αποστέλλει το Amazon.",
+      "alts": [
+        [
+          "Amazon.de (χωρίς RGB)",
+          526.99,
+          "https://www.amazon.de/dp/B0D4NLSP87"
+        ],
+        [
+          "Skroutz (χωρίς RGB)",
+          535.9,
+          "https://www.skroutz.gr/s/48887375/p.html"
+        ],
+        [
+          "Skroutz (RGB)",
+          559.9,
+          "https://www.skroutz.gr/s/56360724/p.html"
+        ],
+        [
+          "Plaisio (Corsair Vengeance RGB)",
+          699.0,
+          "https://www.plaisio.gr/list/anavathmisi-diktia/anavathmisi-pc/mnimes-ram"
+        ]
+      ]
+    },
+    {
+      "part": "SSD",
+      "name": "KIOXIA Exceria Plus G3 NVMe 2 TB",
+      "store": "Plaisio",
+      "price": 259.0,
+      "old": 319.99,
+      "url": "https://www.plaisio.gr/product/anavathmisi-diktia/storage/diskoi-ssd-hdd/kioxia-ssd-exceria-plus-g3-nvme-m-dot-2-2tb_4339584",
+      "why": "2 TB χωράνε άνετα Fortnite και άλλα παιχνίδια. Με 1 TB (περίπου 160 €) γλιτώνεις περίπου 100 €.",
+      "alts": [
+        [
+          "Skroutz (Kingston NV3 2 TB)",
+          259.32,
+          "https://www.skroutz.gr/s/55365010/p.html"
+        ],
+        [
+          "Amazon.de (Crucial P310 1 TB)",
+          166.72,
+          "https://www.amazon.de/dp/B0DC8VPSHV"
+        ],
+        [
+          "Skroutz (WD SN7100 2 TB)",
+          360.63,
+          "https://www.skroutz.gr/s/58383162/p.html"
+        ]
+      ]
+    },
+    {
+      "part": "Ψύξη CPU",
+      "name": "Arctic Liquid Freezer III Pro 360 A-RGB",
+      "store": "Skroutz",
+      "price": 84.65,
+      "url": "https://www.skroutz.gr/s/59894502/p.html",
+      "why": "Από τις καλύτερες υδροψύξεις 360 mm σε σχέση με την τιμή, με A-RGB ανεμιστήρες για το γυάλινο κουτί.",
+      "alts": [
+        [
+          "Skroutz (χωρίς RGB)",
+          73.9,
+          "https://www.skroutz.gr/s/59894538/p.html"
+        ],
+        [
+          "Plaisio (χωρίς RGB)",
+          84.9,
+          "https://www.plaisio.gr/product/anavathmisi-diktia/anavathmisi-pc/anemistirakia-psiktres/arctic-cooling-cpu-cooler-arctic-liquid-freezer-iii-pro-360-black_4893204"
+        ],
+        [
+          "Amazon.de (αερόψυξη Peerless Assassin 120 SE ARGB)",
+          34.79,
+          "https://www.amazon.de/dp/B09NSCCYHH"
+        ]
+      ]
+    },
+    {
+      "part": "Τροφοδοτικό",
+      "name": "Corsair RM850e (2025) 850W Gold, ATX 3.1",
+      "store": "Amazon.de",
+      "price": 86.48,
+      "url": "https://www.amazon.de/dp/B0DMTN5WLB",
+      "why": "Αρθρωτό, αθόρυβο, με καλώδιο 12V-2x6, οπότε σηκώνει και μελλοντική αναβάθμιση κάρτας. 850W αφήνουν άνετο περιθώριο.",
+      "alts": [
+        [
+          "Plaisio (Gigabyte PG5 850W)",
+          89.9,
+          "https://www.plaisio.gr/product/anavathmisi-diktia/anavathmisi-pc/trofodotika/psu-gigabyte-850w-80-plus-gold-modular-pg5_5023114"
+        ],
+        [
+          "Skroutz (be quiet! Pure Power 12 850W)",
+          70.0,
+          "https://www.skroutz.gr/s/57376082/p.html"
+        ]
+      ]
+    },
+    {
+      "part": "Κουτί",
+      "name": "Thermalright A70 Vision White (γυαλί 270°, οθόνη 9,16\")",
+      "store": "Amazon.de",
+      "price": 114.7,
+      "url": "https://www.amazon.de/dp/B0GHYJF25F",
+      "why": "Γυαλί σε τρεις πλευρές χωρίς κολόνα και ενσωματωμένη οθόνη 1920×480. Χωράει κάρτες έως 420 mm. Δεν έχει ανεμιστήρες, γι' αυτό υπάρχει η επόμενη γραμμή. Νέο μοντέλο με λίγες κριτικές (5,0 ★ από 9).",
+      "alts": []
+    },
+    {
+      "part": "Ανεμιστήρες",
+      "name": "2× Thermalright TL-C12C-S X3 ARGB (6 ανεμιστήρες 120 mm)",
+      "store": "Amazon.de",
+      "price": 26.24,
+      "url": "https://www.amazon.de/dp/B0G4JQBL67",
+      "why": "Στο κάτω μέρος και στο πλάι, ενώ το ψυγείο 360 mm μπαίνει πάνω. 13,12 € το πακέτο των 3.",
+      "alts": []
+    }
   ],
   "options": [
-    {"label": "Ryzen 7 7800X3D αντί για 9800X3D", "delta": -94.26, "price_note": "Amazon.de 288,16 € · Skroutz 287,90 € · Plaisio 359 €",
-     "url": "https://www.amazon.de/dp/B0BTZB7F88",
-     "note": "Περίπου 8–12% πιο αργός σε Fortnite με χαμηλές ρυθμίσεις και πολλά fps (εκεί μετράει ο επεξεργαστής). Σε 1440p με υψηλές ρυθμίσεις η διαφορά σχεδόν χάνεται. Είναι η value επιλογή αν θες να γλιτώσεις περίπου 95 €."},
-    {"label": "RTX 5070 Ti 16 GB αντί για RX 9070 XT", "delta": 400.00, "price_note": "φθηνότερη: Plaisio Gigabyte Windforce OC SFF 1.349 € · Skroutz 1.434,79 € · Amazon.de 1.416,10 €",
-     "url": "https://www.plaisio.gr/product/anavathmisi-diktia/anavathmisi-pc/kartes-grafikon/gigabyte-vga-geforce-rtx-5070-ti-windforce-oc-sff-16-gb_4733770",
-     "note": "Έχει DLSS 4, καλύτερο ray tracing και CUDA (χρήσιμο για τοπικά μοντέλα AI). Στο Fortnite είναι μόλις λίγα % πιο γρήγορη. Δεν αξίζει τα +400 € μόνο για gaming."},
-    {"label": "SSD 1 TB αντί για 2 TB", "delta": -92.28, "price_note": "Crucial P310 1 TB · Amazon.de 166,72 €", "url": "https://www.amazon.de/dp/B0DC8VPSHV",
-     "note": "Το Fortnite πιάνει περίπου 50–60 GB."},
-    {"label": "Αερόψυξη αντί για υδρόψυξη", "delta": -49.86, "price_note": "Thermalright Peerless Assassin 120 SE ARGB · Amazon.de 34,79 €", "url": "https://www.amazon.de/dp/B09NSCCYHH",
-     "note": "Ο 9800X3D ψύχεται άνετα και με αυτήν. Η υδρόψυξη μπαίνει κυρίως για την εμφάνιση στο γυάλινο κουτί."}
+    {
+      "label": "Ryzen 7 7800X3D αντί για 9800X3D",
+      "delta": -94.26,
+      "price_note": "Amazon.de 288,16 € · Skroutz 287,90 € · Plaisio 359 €",
+      "url": "https://www.amazon.de/dp/B0BTZB7F88",
+      "note": "Περίπου 8–12% πιο αργός σε Fortnite με χαμηλές ρυθμίσεις και πολλά fps (εκεί μετράει ο επεξεργαστής). Σε 1440p με υψηλές ρυθμίσεις η διαφορά σχεδόν χάνεται. Είναι η value επιλογή αν θες να γλιτώσεις περίπου 95 €.",
+      "key": "cpu7800"
+    },
+    {
+      "label": "RTX 5070 Ti 16 GB αντί για RX 9070 XT",
+      "delta": 400.0,
+      "price_note": "φθηνότερη: Plaisio Gigabyte Windforce OC SFF 1.349 € · Skroutz 1.434,79 € · Amazon.de 1.416,10 €",
+      "url": "https://www.plaisio.gr/product/anavathmisi-diktia/anavathmisi-pc/kartes-grafikon/gigabyte-vga-geforce-rtx-5070-ti-windforce-oc-sff-16-gb_4733770",
+      "note": "Έχει DLSS 4, καλύτερο ray tracing και CUDA (χρήσιμο για τοπικά μοντέλα AI). Στο Fortnite είναι μόλις λίγα % πιο γρήγορη. Δεν αξίζει τα +400 € μόνο για gaming.",
+      "key": "gpu5070ti"
+    },
+    {
+      "label": "SSD 1 TB αντί για 2 TB",
+      "delta": -92.28,
+      "price_note": "Crucial P310 1 TB · Amazon.de 166,72 €",
+      "url": "https://www.amazon.de/dp/B0DC8VPSHV",
+      "note": "Το Fortnite πιάνει περίπου 50–60 GB.",
+      "key": "ssd1tb"
+    },
+    {
+      "label": "Αερόψυξη αντί για υδρόψυξη",
+      "delta": -49.86,
+      "price_note": "Thermalright Peerless Assassin 120 SE ARGB · Amazon.de 34,79 €",
+      "url": "https://www.amazon.de/dp/B09NSCCYHH",
+      "note": "Ο 9800X3D ψύχεται άνετα και με αυτήν. Η υδρόψυξη μπαίνει κυρίως για την εμφάνιση στο γυάλινο κουτί.",
+      "key": "air"
+    }
   ],
   "cases": [
-    {"name": "Thermalright A70 Vision White", "price": 114.70, "store": "Amazon.de", "url": "https://www.amazon.de/dp/B0GHYJF25F",
-     "fans": "χωρίς ανεμιστήρες", "verdict": "Προτείνεται. Πανοραμικό γυαλί χωρίς κολόνα και οθόνη 9,16\" στην τιμή ενός απλού κουτιού. Μοναδικό μειονέκτημα: είναι καινούργιο και έχει λίγες κριτικές."},
-    {"name": "Corsair 3500X RS-R ARGB (πανοραμικό)", "price": 115.95, "store": "Amazon.de", "url": "https://www.amazon.de/dp/B0FJ2ZBK8J",
-     "fans": "3 ARGB ανεμιστήρες μέσα", "verdict": "Η πιο σίγουρη επιλογή: γνωστή μάρκα, πολλές κριτικές, με ανεμιστήρες. Δεν έχει οθόνη. Στο Plaisio το λευκό κοστίζει 139,90 €."},
-    {"name": "Corsair Frame 4500X RS-R ARGB", "price": 70.84, "store": "Amazon.de", "url": "https://www.amazon.de/dp/B0FJ2PYLFB",
-     "fans": "ARGB ανεμιστήρες μέσα", "verdict": "Η φθηνότερη πανοραμική επιλογή αυτή τη στιγμή. Έλεγξε την τιμή, γιατί μοιάζει με προσφορά."},
-    {"name": "Lian Li O11 Vision Compact", "price": 116.67, "store": "Skroutz", "url": "https://www.skroutz.gr/s/57191117/p.html",
-     "fans": "χωρίς ανεμιστήρες", "verdict": "Το κλασικό κουτί με γυαλί χωρίς κολόνα, πολύ καλό στήσιμο καλωδίων."},
-    {"name": "NZXT H9 Flow (2025)", "price": 114.51, "store": "Amazon.de", "url": "https://www.amazon.de/dp/B0DQPPKNSS",
-     "fans": "4 ανεμιστήρες (χωρίς RGB)", "verdict": "Διπλός θάλαμος με εξαιρετική ροή αέρα. Η έκδοση RGB+ κοστίζει 178,73 €."},
-    {"name": "Lian Li O11 Dynamic EVO RGB White", "price": 165.49, "store": "Skroutz", "url": "https://www.skroutz.gr/s/49439087/p.html",
-     "fans": "χωρίς ανεμιστήρες", "verdict": "Premium με RGB λωρίδες. Στο Plaisio κοστίζει 229,90 €."},
-    {"name": "HYTE Y70 (Snow White)", "price": 256.98, "store": "Skroutz", "url": "https://www.skroutz.gr/s/55718284/p.html",
-     "fans": "3 ανεμιστήρες", "verdict": "Το πιο «εντυπωσιακό» κουτί με πανοραμικό γυαλί και κάθετη κάρτα. Η έκδοση με οθόνη αφής 14,9\" κοστίζει 339 € στο Plaisio. Ακριβό για value build."}
+    {
+      "name": "Thermalright A70 Vision White",
+      "price": 114.7,
+      "store": "Amazon.de",
+      "url": "https://www.amazon.de/dp/B0GHYJF25F",
+      "fans": "χωρίς ανεμιστήρες",
+      "verdict": "Προτείνεται. Πανοραμικό γυαλί χωρίς κολόνα και οθόνη 9,16\" στην τιμή ενός απλού κουτιού. Μοναδικό μειονέκτημα: είναι καινούργιο και έχει λίγες κριτικές."
+    },
+    {
+      "name": "Corsair 3500X RS-R ARGB (πανοραμικό)",
+      "price": 115.95,
+      "store": "Amazon.de",
+      "url": "https://www.amazon.de/dp/B0FJ2ZBK8J",
+      "fans": "3 ARGB ανεμιστήρες μέσα",
+      "verdict": "Η πιο σίγουρη επιλογή: γνωστή μάρκα, πολλές κριτικές, με ανεμιστήρες. Δεν έχει οθόνη. Στο Plaisio το λευκό κοστίζει 139,90 €."
+    },
+    {
+      "name": "Corsair Frame 4500X RS-R ARGB",
+      "price": 70.84,
+      "store": "Amazon.de",
+      "url": "https://www.amazon.de/dp/B0FJ2PYLFB",
+      "fans": "ARGB ανεμιστήρες μέσα",
+      "verdict": "Η φθηνότερη πανοραμική επιλογή αυτή τη στιγμή. Έλεγξε την τιμή, γιατί μοιάζει με προσφορά."
+    },
+    {
+      "name": "Lian Li O11 Vision Compact",
+      "price": 116.67,
+      "store": "Skroutz",
+      "url": "https://www.skroutz.gr/s/57191117/p.html",
+      "fans": "χωρίς ανεμιστήρες",
+      "verdict": "Το κλασικό κουτί με γυαλί χωρίς κολόνα, πολύ καλό στήσιμο καλωδίων."
+    },
+    {
+      "name": "NZXT H9 Flow (2025)",
+      "price": 114.51,
+      "store": "Amazon.de",
+      "url": "https://www.amazon.de/dp/B0DQPPKNSS",
+      "fans": "4 ανεμιστήρες (χωρίς RGB)",
+      "verdict": "Διπλός θάλαμος με εξαιρετική ροή αέρα. Η έκδοση RGB+ κοστίζει 178,73 €."
+    },
+    {
+      "name": "Lian Li O11 Dynamic EVO RGB White",
+      "price": 165.49,
+      "store": "Skroutz",
+      "url": "https://www.skroutz.gr/s/49439087/p.html",
+      "fans": "χωρίς ανεμιστήρες",
+      "verdict": "Premium με RGB λωρίδες. Στο Plaisio κοστίζει 229,90 €."
+    },
+    {
+      "name": "HYTE Y70 (Snow White)",
+      "price": 256.98,
+      "store": "Skroutz",
+      "url": "https://www.skroutz.gr/s/55718284/p.html",
+      "fans": "3 ανεμιστήρες",
+      "verdict": "Το πιο «εντυπωσιακό» κουτί με πανοραμικό γυαλί και κάθετη κάρτα. Η έκδοση με οθόνη αφής 14,9\" κοστίζει 339 € στο Plaisio. Ακριβό για value build."
+    }
   ],
   "notes": [
     "Γιατί AMD: για Fortnite η RX 9070 XT δίνει σχεδόν όσα fps και η RTX 5070 Ti, με περίπου 400 € λιγότερα. Στο Fortnite μετράει περισσότερο ο X3D επεξεργαστής.",
@@ -88,5 +297,6 @@
     "Η RAM είναι το πιο ακριβό μέρος αυτή την περίοδο (περίπου 530 € για 32 GB, όταν παλιότερα κόστιζε περίπου 100 €). Αν βρεις 32 GB DDR5-6000 κάτω από 450 €, αγόρασέ τη.",
     "Σύγκριση με έτοιμο PC: η Praxi πουλάει Vengeance με 7800X3D, 32 GB, 1 TB και RX 9070 XT στα 2.399 € (σάρωση 18/11, καρτέλα «Έτοιμα PC»). Το custom με τις ίδιες επιλογές (7800X3D και 1 TB) βγαίνει περίπου 2.410 €, αλλά με καλύτερο κουτί, ψύξη και τροφοδοτικό και χωρίς συναρμολόγηση. Το έτοιμο έχει ενιαία εγγύηση και συναρμολόγηση.",
     "Black Friday 27/11: Plaisio και Amazon.de έχουν συνήθως εκπτώσεις σε κάρτες γραφικών και SSD. Ξανακοίτα τις τιμές τότε πριν παραγγείλεις."
-  ]
+  ],
+  "compare_note": "Έτοιμα PC από την ωριαία σάρωση με X3D επεξεργαστή και κάρτα κοντά στην RX 9070 XT, σε τιμή −20% έως +12% από το custom. Η σύγκριση γίνεται με το ίδιο custom προσαρμοσμένο στα εξαρτήματα του έτοιμου (π.χ. 7800X3D ή 1 TB SSD). Τα έτοιμα έχουν συναρμολόγηση και ενιαία εγγύηση, αλλά συνήθως φθηνότερο κουτί, τροφοδοτικό και ψύξη."
 }

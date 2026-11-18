@@ -1232,6 +1232,16 @@ def email_alerts(con, offers, wl):
 
 
 # ============================================================================ σελίδα
+def build_data(wl):
+    """build.json + βαθμός Fortnite του custom (ίδια κλίμακα με τα έτοιμα PC)."""
+    if not BUILD.exists():
+        return None
+    b = json.loads(BUILD.read_text(encoding="utf-8"))
+    total = sum(p["price"] for p in b["parts"])
+    b["fn"] = score_pc(parse_specs(" ".join(p["name"] for p in b["parts"])), total, wl)["fn"]
+    return b
+
+
 def render(wl, offers, today, email_msg, first_run):
     cfg = notify_cfg()
     data = {
@@ -1245,7 +1255,7 @@ def render(wl, offers, today, email_msg, first_run):
         "manual": wl["manual_links"],
         "advice": wl["advice"],
         "bf": wl.get("black_friday", {}),
-        "build": json.loads(BUILD.read_text(encoding="utf-8")) if BUILD.exists() else None,
+        "build": build_data(wl),
         "fetch": [{"store": s, "url": u, "code": c, "n": n, "note": note} for s, u, c, n, note in FETCH_LOG],
         "offers": [{k: o.get(k) for k in ("store", "cat", "target", "name", "url", "price", "net", "old", "min30_store", "rrp",
                                           "rating", "reviews", "stock", "spec", "score", "stats", "series", "badges", "notes",
@@ -1470,9 +1480,34 @@ function drawBuild() {
     <td class="price" style="color:${o.delta < 0 ? 'var(--good)' : 'var(--bad)'}">${o.delta < 0 ? '−' : '+'}${eur(Math.abs(o.delta))}</td><td class="price">${eur(total + o.delta)}</td></tr>`).join('');
   const cases = B.cases.map(c => `<div class="card"><h4><a target="_blank" href="${esc(c.url)}">${esc(c.name)}</a></h4>
     <div class="price">${eur(c.price)}</div><div class="small mut">${esc(c.store)} · ${esc(c.fans)}</div><div class="notes">${esc(c.verdict)}</div></div>`).join('');
+  // έτοιμα PC σε παρόμοια τιμή: σύγκριση με το ίδιο custom προσαρμοσμένο στα εξαρτήματά τους
+  const od = Object.fromEntries(B.options.filter(o => o.key).map(o => [o.key, o.delta]));
+  const same = D.offers.filter(o => o.cat === 'prebuilt' && o.spec && o.spec.x3d && (o.spec.gpu_perf || 0) >= 56
+      && o.price >= total * 0.8 && o.price <= total * 1.12).map(o => {
+    const s = o.spec, adj = [];
+    let eq = total, known = true;
+    if (/7800X3D/i.test(s.cpu || '') && od.cpu7800 != null) { eq += od.cpu7800; adj.push('7800X3D'); }
+    else if (!/98[05]0X3D/i.test(s.cpu || '')) known = false;
+    if (/5070 Ti/i.test(s.gpu || '') && od.gpu5070ti != null) { eq += od.gpu5070ti; adj.push('RTX 5070 Ti'); }
+    else if (!/9070 XT/i.test(s.gpu || '')) known = false;
+    if (/^(1(\.0)? TB|1000 GB|1024 GB|512 GB|500 GB)$/i.test(s.ssd || '') && od.ssd1tb != null) { eq += od.ssd1tb; adj.push('SSD ' + s.ssd); }
+    if ((s.ram || 0) > 32) adj.push(s.ram + ' GB RAM (το custom έχει 32)');
+    return { o, eq, known, adj, diff: o.price - eq };
+  }).map(x => Object.assign(x, { out: /εκτός|μη διαθέσιμο/i.test(x.o.stock || '') }))
+    .sort((a, b) => (a.out - b.out) || (b.known - a.known) || (a.diff - b.diff)).slice(0, 8);
+  const verdict = x => !x.known ? `<span class="b">άλλα εξαρτήματα (${esc(x.o.spec.cpu)} · ${esc(x.o.spec.gpu)}): σύγκρινε μόνος σου</span>`
+    : x.diff <= -50 ? `<span class="b exc">✅ Συμφέρει: ${eur(-x.diff)} φθηνότερο από το ίδιο custom</span>`
+    : x.diff <= 100 ? `<span class="b disc">≈ ίδια τιμή (${x.diff < 0 ? '−' : '+'}${eur(Math.abs(x.diff))}), αλλά με συναρμολόγηση και εγγύηση</span>`
+    : `<span class="b fake">❌ ${eur(x.diff)} ακριβότερο από το ίδιο custom</span>`;
+  const sameCards = same.map(x => `<div class="card">${verdict(x)}<h4><a target="_blank" href="${esc(x.o.url)}">${esc(x.o.name)}</a></h4>
+    <div>${priceCell(x.o)}</div><div class="small mut">${esc(D.stores[x.o.store].label)} · Fortnite ${x.o.score.fn} (custom ${B.fn || '–'})</div>
+    <div class="notes">${x.known ? `Ίδιο custom${x.adj.length ? ' με ' + esc(x.adj.join(', ')) : ''}: <b>${eur(x.eq)}</b>` : ''}${x.o.stock ? ' · ' + (x.out ? '<b style="color:var(--bad)">' + esc(x.o.stock) + '</b>' : esc(x.o.stock)) : ''}</div></div>`).join('');
+  const sameSec = `<div class="grp"><h3>Έτοιμα PC στην ίδια τιμή (ζωντανά από τη σάρωση)</h3><div class="small mut" style="margin-bottom:6px">${esc(B.compare_note || '')}</div>
+    ${same.length ? `<div class="cards">${sameCards}</div>` : '<p class="mut">Κανένα αντίστοιχο έτοιμο PC σε αυτό το εύρος τιμής σήμερα.</p>'}</div>`;
   return `<div class="box"><h3 style="margin:0 0 4px">${esc(B.title)}</h3><div class="small mut">${esc(B.intro)} Έλεγχος τιμών: <b>${esc(B.checked)}</b>.</div></div>
   <table class="tbl"><tr><th>Εξάρτημα</th><th>Προϊόν</th><th>Κατάστημα</th><th>Τιμή</th></tr>${rows}
   <tr><td colspan="3" style="text-align:right"><b>Σύνολο</b></td><td><div class="price" style="font-size:18px">${eur(total)}</div></td></tr></table>
+  ${sameSec}
   <div class="grp"><h3>Εναλλακτικές επιλογές (πώς αλλάζει το σύνολο)</h3><table class="tbl"><tr><th>Αλλαγή</th><th>Διαφορά</th><th>Νέο σύνολο</th></tr>${opts}</table></div>
   <div class="grp"><h3>Εντυπωσιακά κουτιά (γυάλινα / RGB / «vision»)</h3><div class="cards">${cases}</div></div>
   <div class="box"><ul style="margin:0;padding-left:18px">${B.notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul></div>`;
