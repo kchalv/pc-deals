@@ -852,7 +852,8 @@ def relay_scan(wl, push=True):
     ok = sorted({s for s, _, c, n, _ in FETCH_LOG if c == 200 and n} & ONLY_STORES)
     pc_raw = [o for o in pc_raw if o["store"] in ok]
     per_raw = [o for o in per_raw if o["store"] in ok]
-    data = {"ts": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "stores": ok, "pc": pc_raw, "per": per_raw,
+    build = [o for o in build_track(load_build()) if o["store"] in ONLY_STORES]
+    data = {"ts": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "stores": ok, "pc": pc_raw, "per": per_raw, "build": build,
             "fetch": [{"store": s, "url": u, "code": c, "n": n, "note": note} for s, u, c, n, note in FETCH_LOG if s in ok]}
     REPORTS.mkdir(exist_ok=True)
     RELAY_FILE.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
@@ -1232,17 +1233,123 @@ def email_alerts(con, offers, wl):
 
 
 # ============================================================================ σελίδα
-def build_data(wl):
-    """build.json + βαθμός Fortnite του custom (ίδια κλίμακα με τα έτοιμα PC)."""
-    if not BUILD.exists():
+def load_build():
+    return json.loads(BUILD.read_text(encoding="utf-8")) if BUILD.exists() else None
+
+
+def plaisio_product(url):
+    """Τιμή και διαθεσιμότητα από σελίδα προϊόντος Plaisio (JSON-LD)."""
+    t = get(url, "plaisio")
+    if not t:
         return None
-    b = json.loads(BUILD.read_text(encoding="utf-8"))
+    pm = re.search(r'"price"\s*:\s*"?([\d.]+)', t)
+    nm = re.search(r'<h1[^>]*>([\s\S]*?)</h1>', t)
+    av = re.search(r'"availability"\s*:\s*"[^"]*/(\w+)"', t)
+    if not pm:
+        return None
+    FETCH_LOG.append(("plaisio", url, 200, 1, "custom build"))
+    return {"store": "plaisio", "name": clean(nm.group(1)) if nm else url.rsplit("/", 1)[-1], "url": url,
+            "price": float(pm.group(1)), "stock": "σε απόθεμα" if av and av.group(1) == "InStock" else (av.group(1) if av else "")}
+
+
+def build_track(b):
+    """Τιμές των components του custom build από τα καταστήματα που διαβάζονται αυτόματα.
+    Επιστρέφει [{part, store, name, url, price, stock}] (όλες οι αντιστοιχίσεις, όχι μόνο η φθηνότερη)."""
+    out = []
+    if not b:
+        return out
+    stores = b.get("track_stores", [])
+    log("Custom build (components):")
+    for part in b["parts"]:
+        t = part.get("track")
+        if not t:
+            continue
+        lo, hi = t.get("range", [0, 1e9])
+        found = []
+        if "plaisio" in stores and t.get("plaisio") and want("plaisio"):
+            o = plaisio_product(t["plaisio"])
+            if o:
+                found.append(o)
+        for sk in stores:
+            if sk == "plaisio" or sk not in SEARCHERS or not want(sk):
+                continue
+            try:
+                res = SEARCHERS[sk](t["q"])
+            except Exception as e:   # ένα κατάστημα που χάλασε δεν σταματά τη σάρωση
+                log(f"  {sk}: {type(e).__name__}")
+                continue
+            for o in res:
+                n = norm(o["name"])
+                if (all(re.search(rx, n) for rx in t["match"]) and not any(re.search(rx, n) for rx in t.get("exclude", []))
+                        and lo <= o["price"] <= hi):
+                    found.append({k: o.get(k) for k in ("store", "name", "url", "price", "stock")})
+        for o in found:
+            o["part"] = part["key"]
+        out += found
+        best = min(found, key=lambda o: o["price"], default=None)
+        log(f"  {part['key']:7s} {len(found):2d} αντιστοιχίσεις" + (f", φθηνότερη {best['price']:.2f} € ({best['store']})" if best else ""))
+    return out
+
+
+def build_history(con, b, auto, today):
+    """Γράφει το ιστορικό (χειροκίνητη τιμή build.json + φθηνότερη αυτόματη) και επιστρέφει τα δεδομένα της καρτέλας."""
+    if not b:
+        return None
+    con.execute("create table if not exists build_hist(part text, day text, src text, price real, store text, url text, name text,"
+                " primary key(part, day, src))")
     total = sum(p["price"] for p in b["parts"])
-    b["fn"] = score_pc(parse_specs(" ".join(p["name"] for p in b["parts"])), total, wl)["fn"]
+    for part in b["parts"]:
+        k, qty = part["key"], (part.get("track") or {}).get("qty", 1)
+        con.execute("insert into build_hist values(?,?,?,?,?,?,?) on conflict(part, day, src) do update set price=excluded.price,"
+                    " store=excluded.store, url=excluded.url, name=excluded.name",
+                    (k, today, "manual", part["price"], part["store"], part["url"], part["name"]))
+        mine = sorted((o for o in auto if o["part"] == k), key=lambda o: o["price"])
+        part["auto"] = [{"store": o["store"], "name": o["name"], "url": o["url"], "price": round(o["price"] * qty, 2),
+                         "stock": o.get("stock") or ""} for o in mine[:4]]
+        if mine:
+            o = mine[0]
+            con.execute("insert into build_hist values(?,?,?,?,?,?,?) on conflict(part, day, src) do update set"
+                        " store=case when excluded.price < price then excluded.store else store end,"
+                        " url=case when excluded.price < price then excluded.url else url end,"
+                        " name=case when excluded.price < price then excluded.name else name end,"
+                        " price=min(price, excluded.price)",
+                        (k, today, "auto", round(o["price"] * qty, 2), o["store"], o["url"], o["name"]))
+    con.commit()
+    keys = [p["key"] for p in b["parts"]]
+    since = (dt.date.fromisoformat(today) - dt.timedelta(days=180)).isoformat()
+    rows = con.execute("select part, day, src, price, store from build_hist where day >= ? order by day", (since,)).fetchall()
+    days = sorted({d for _, d, *_ in rows})
+    by = {}
+    for part, day, src, price, store in rows:
+        by.setdefault(part, {}).setdefault(day, {})[src] = (price, store)
+    for part in b["parts"]:
+        ser = []
+        for day in days:
+            v = by.get(part["key"], {}).get(day)
+            if v:
+                best = min(v.values(), key=lambda x: x[0])
+                ser.append([day, best[0], best[1], v.get("auto", (None,))[0], v.get("manual", (None,))[0]])
+        part["series"] = ser
+        if ser:
+            prices = [x[1] for x in ser]
+            part["hstats"] = {"first": prices[0], "first_day": ser[0][0], "prev": prices[-2] if len(prices) > 1 else None,
+                              "min": min(prices), "max": max(prices), "now": prices[-1], "now_store": ser[-1][2]}
+    # σύνολο ανά μέρα: για κάθε component η τελευταία γνωστή καλύτερη τιμή μέχρι εκείνη τη μέρα
+    carry, series_total = {}, []
+    for day in days:
+        for k in keys:
+            v = by.get(k, {}).get(day)
+            if v:
+                carry[k] = min(v.values(), key=lambda x: x[0])[0]
+        if all(k in carry for k in keys):
+            series_total.append([day, round(sum(carry[k] for k in keys), 2)])
+    b["total_series"] = series_total
+    b["fn"] = score_pc(parse_specs(" ".join(p["name"] for p in b["parts"])), total,
+                       json.loads(WATCHLIST.read_text(encoding="utf-8")))["fn"]
     return b
 
 
-def render(wl, offers, today, email_msg, first_run):
+def render(wl, offers, today, email_msg, first_run, build=None):
     cfg = notify_cfg()
     data = {
         "generated": dt.datetime.now().strftime("%d/%m/%Y %H:%M"),
@@ -1255,7 +1362,7 @@ def render(wl, offers, today, email_msg, first_run):
         "manual": wl["manual_links"],
         "advice": wl["advice"],
         "bf": wl.get("black_friday", {}),
-        "build": build_data(wl),
+        "build": build,
         "fetch": [{"store": s, "url": u, "code": c, "n": n, "note": note} for s, u, c, n, note in FETCH_LOG],
         "offers": [{k: o.get(k) for k in ("store", "cat", "target", "name", "url", "price", "net", "old", "min30_store", "rrp",
                                           "rating", "reviews", "stock", "spec", "score", "stats", "series", "badges", "notes",
@@ -1473,9 +1580,37 @@ function drawBuild() {
   if (!B) return '<div class="box">Δεν υπάρχει build.json.</div>';
   const total = B.parts.reduce((s, p) => s + p.price, 0);
   const alts = p => (p.alts || []).map(a => `<a target="_blank" href="${esc(a[2])}">${esc(a[0])} ${eur(a[1])}</a>`).join(' · ');
+  const delta = (a, b) => a == null || b == null || Math.abs(a - b) < 0.5 ? '' :
+    `<span style="color:${a < b ? 'var(--good)' : 'var(--bad)'};font-weight:600">${a < b ? '▼ −' : '▲ +'}${eur(Math.abs(a - b))}</span>`;
+  const hcell = p => {
+    const h = p.hstats;
+    if (!h) return '<span class="small mut">ιστορικό από την επόμενη σάρωση</span>';
+    const sl = D.stores[h.now_store] ? D.stores[h.now_store].label : h.now_store;
+    return `${spark(p.series)}<div class="small"><b>${eur(h.now)}</b> <span class="mut">${esc(sl)}</span>
+      ${h.prev != null ? '<br>από χθες ' + (delta(h.now, h.prev) || '<span class="mut">ίδια</span>') : ''}
+      <br><span class="mut">από ${esc(h.first_day.slice(8, 10) + '/' + h.first_day.slice(5, 7))}</span> ${delta(h.now, h.first) || '<span class="mut">ίδια</span>'}
+      <br><span class="mut">χαμηλό ${eur(h.min)} · υψηλό ${eur(h.max)}</span></div>`;
+  };
+  const autos = p => (p.auto || []).length ? `<div class="small" style="margin-top:3px"><span class="mut">Αυτόματα σήμερα (ελληνικά καταστήματα):</span> `
+    + p.auto.map(a => `<a target="_blank" href="${esc(a.url)}" title="${esc(a.name)}">${esc((D.stores[a.store] || {}).label || a.store)} ${eur(a.price)}</a>`).join(' · ') + '</div>'
+    : (p.track ? '<div class="small mut" style="margin-top:3px">Αυτόματα: δεν βρέθηκε σήμερα σε ελληνικό κατάστημα που διαβάζεται αυτόματα.</div>' : '');
   const rows = B.parts.map(p => `<tr><td><b>${esc(p.part)}</b></td>
-    <td><a target="_blank" href="${esc(p.url)}">${esc(p.name)}</a><div class="notes">${esc(p.why || '')}</div>${p.alts && p.alts.length ? `<div class="small" style="margin-top:3px"><span class="mut">Αλλού:</span> ${alts(p)}</div>` : ''}</td>
-    <td>${esc(p.store)}</td><td><div class="price">${eur(p.price)}</div>${p.old ? `<div class="old">${eur(p.old)}</div>` : ''}</td></tr>`).join('');
+    <td><a target="_blank" href="${esc(p.url)}">${esc(p.name)}</a><div class="notes">${esc(p.why || '')}</div>${p.alts && p.alts.length ? `<div class="small" style="margin-top:3px"><span class="mut">Αλλού:</span> ${alts(p)}</div>` : ''}${autos(p)}</td>
+    <td>${esc(p.store)}</td><td><div class="price">${eur(p.price)}</div>${p.old ? `<div class="old">${eur(p.old)}</div>` : ''}</td><td>${hcell(p)}</td></tr>`).join('');
+  const TS = B.total_series || [], tnow = TS.length ? TS[TS.length - 1][1] : null;
+  const tprev = TS.length > 1 ? TS[TS.length - 2][1] : null, tfirst = TS.length ? TS[0][1] : null;
+  const tmin = TS.length ? Math.min(...TS.map(x => x[1])) : null;
+  const totalHist = TS.length ? `${spark(TS)}<div class="small"><b>${eur(tnow)}</b> με την καλύτερη τιμή κάθε component
+    ${tprev != null ? '<br>από χθες ' + (delta(tnow, tprev) || '<span class="mut">ίδιο</span>') : ''}
+    <br><span class="mut">από ${esc(TS[0][0].slice(8, 10) + '/' + TS[0][0].slice(5, 7))}</span> ${delta(tnow, tfirst) || '<span class="mut">ίδιο</span>'}
+    <br><span class="mut">χαμηλό ${eur(tmin)}</span></div>` : '';
+  const histTable = TS.length > 1 ? `<div class="grp"><h3>Ιστορικό συνόλου ανά μέρα</h3><table class="tbl"><tr><th>Μέρα</th><th>Σύνολο</th><th>Αλλαγή</th>${B.parts.map(p => `<th class="hide-m">${esc(p.part)}</th>`).join('')}</tr>`
+    + TS.slice(-30).reverse().map(([d, v], i, arr) => {
+      const prevT = arr[i + 1] ? arr[i + 1][1] : null;
+      const cells = B.parts.map(p => { const r = (p.series || []).find(x => x[0] === d); const pr = (p.series || []).filter(x => x[0] < d).pop();
+        return `<td class="hide-m small">${r ? eur(r[1]) + ' ' + (pr ? delta(r[1], pr[1]) : '') : '–'}</td>`; }).join('');
+      return `<tr><td>${esc(d.slice(8, 10) + '/' + d.slice(5, 7))}</td><td class="price">${eur(v)}</td><td>${prevT != null ? delta(v, prevT) || '<span class="mut">–</span>' : ''}</td>${cells}</tr>`;
+    }).join('') + '</table></div>' : '';
   const opts = B.options.map(o => `<tr><td><a target="_blank" href="${esc(o.url)}">${esc(o.label)}</a><div class="notes">${esc(o.note)}</div><div class="small mut">${esc(o.price_note)}</div></td>
     <td class="price" style="color:${o.delta < 0 ? 'var(--good)' : 'var(--bad)'}">${o.delta < 0 ? '−' : '+'}${eur(Math.abs(o.delta))}</td><td class="price">${eur(total + o.delta)}</td></tr>`).join('');
   const cases = B.cases.map(c => `<div class="card"><h4><a target="_blank" href="${esc(c.url)}">${esc(c.name)}</a></h4>
@@ -1505,8 +1640,10 @@ function drawBuild() {
   const sameSec = `<div class="grp"><h3>Έτοιμα PC στην ίδια τιμή (ζωντανά από τη σάρωση)</h3><div class="small mut" style="margin-bottom:6px">${esc(B.compare_note || '')}</div>
     ${same.length ? `<div class="cards">${sameCards}</div>` : '<p class="mut">Κανένα αντίστοιχο έτοιμο PC σε αυτό το εύρος τιμής σήμερα.</p>'}</div>`;
   return `<div class="box"><h3 style="margin:0 0 4px">${esc(B.title)}</h3><div class="small mut">${esc(B.intro)} Έλεγχος τιμών: <b>${esc(B.checked)}</b>.</div></div>
-  <table class="tbl"><tr><th>Εξάρτημα</th><th>Προϊόν</th><th>Κατάστημα</th><th>Τιμή</th></tr>${rows}
-  <tr><td colspan="3" style="text-align:right"><b>Σύνολο</b></td><td><div class="price" style="font-size:18px">${eur(total)}</div></td></tr></table>
+  <table class="tbl"><tr><th>Εξάρτημα</th><th>Προϊόν</th><th>Κατάστημα</th><th>Τιμή</th><th>Ιστορικό (καλύτερη τιμή/μέρα)</th></tr>${rows}
+  <tr><td colspan="3" style="text-align:right"><b>Σύνολο</b></td><td><div class="price" style="font-size:18px">${eur(total)}</div></td><td>${totalHist}</td></tr></table>
+  <div class="small mut" style="margin-top:4px">${esc(B.track_note || '')}</div>
+  ${histTable}
   ${sameSec}
   <div class="grp"><h3>Εναλλακτικές επιλογές (πώς αλλάζει το σύνολο)</h3><table class="tbl"><tr><th>Αλλαγή</th><th>Διαφορά</th><th>Νέο σύνολο</th></tr>${opts}</table></div>
   <div class="grp"><h3>Εντυπωσιακά κουτιά (γυάλινα / RGB / «vision»)</h3><div class="cards">${cases}</div></div>
@@ -1688,6 +1825,7 @@ def main():
     try:
         today = dt.date.today().isoformat()
         con = db_open()
+        build_auto = []
         if args.no_fetch:
             offers = []
             try:   # πλήρη δεδομένα της τελευταίας σάρωσης (παλιές τιμές, κριτικές κ.λπ.)
@@ -1706,8 +1844,11 @@ def main():
             offers += [o for o in classify(wl, load_imports(), [])
                        if (o["store"], o["url"], o["target"]) not in have]
         else:
-            offers = collect(wl, load_relay(args.relay_in, wl) if args.relay_in else None)
+            relay = load_relay(args.relay_in, wl) if args.relay_in else None
+            offers = collect(wl, relay)
+            build_auto = (relay or {}).get("build", []) + build_track(load_build())
         first_run = history_sync(con, offers, today)
+        build = build_history(con, load_build(), build_auto, today)
         for o in offers:
             assess(o, wl, today)
         email_msg = "email απενεργοποιημένο σε αυτή την εκτέλεση"
@@ -1715,7 +1856,7 @@ def main():
             email_msg = email_alerts(con, offers, wl)
         con.close()
         REPORTS.mkdir(exist_ok=True)
-        page = render(wl, offers, today, email_msg, first_run)
+        page = render(wl, offers, today, email_msg, first_run, build)
         out = REPORTS / f"deals_{today}.html"
         out.write_text(page, encoding="utf-8")
         (REPORTS / "latest.html").write_text(page, encoding="utf-8")

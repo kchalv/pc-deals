@@ -8,7 +8,7 @@ on:
     - cron: "17 * * * *"     # κάθε ώρα (UTC, :17)· το GitHub μπορεί να καθυστερήσει λίγα λεπτά
   push:                      # deploy αμέσως μετά από αλλαγή κώδικα/ρυθμίσεων (χωρίς email)
     branches: [main]
-    paths: ["pc_deals.py", "watchlist.json", ".github/workflows/scan.yml"]
+    paths: ["pc_deals.py", "watchlist.json", "build.json", ".github/workflows/scan.yml"]
   workflow_dispatch:
     inputs:
       email:
