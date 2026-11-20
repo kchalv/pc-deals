@@ -5,14 +5,14 @@
     "eshop":    {"label": "e-shop.gr",  "note": "λίστα GAMER PC με «ελάχιστη τιμή 30 ημερών» και προτεινόμενη λιανική · αναζήτηση περιφερειακών"},
     "egate":    {"label": "e-gate",     "note": "αναζήτηση gaming desktop (Actina, MSI, ASUS ROG, Lenovo Legion/LOQ, E-GATE builds) · τιμές προσφοράς"},
     "msystems": {"label": "msystems",   "note": "αναζήτηση (λίγα έτοιμα PC: HP Omen κ.ά.)"},
-    "germanos": {"label": "Germanos",   "note": "μόνο περιφερειακά (δεν πουλάει gaming PC)"},
+    "germanos": {"label": "Germanos",   "note": "περιφερειακά και κινητά (δεν πουλάει gaming PC)"},
     "praxi":    {"label": "Praxi",      "note": "Vengeance builds (1.400+ gaming desktops)· διαβάζονται με αναζητήσεις 9800X3D / 7800X3D / 14900K / 270K Plus"},
     "ucase":    {"label": "U-Case",     "note": "WooCommerce Store API (αναζήτηση) · U-Case gaming PC builds"},
     "tetrabyte":{"label": "Tetrabyte",  "note": "WooCommerce Store API (κυρίως εξαρτήματα)"},
     "iabox":    {"label": "i-aBox",     "note": "κατάλογος + έτοιμα PC (κάθε παραλλαγή CPU/GPU/RAM με την τιμή της)"},
     "mgmanager":{"label": "MG Manager", "note": "αναζήτηση (Crawl-delay 5 s, κυρίως εξαρτήματα)"},
     "kpl":      {"label": "KPL",        "note": "sitemap + σελίδες προϊόντων (η αναζήτηση απαγορεύεται στο robots.txt) · Cube builds"},
-    "kotsovolos":{"label": "Κωτσόβολος","note": "κατηγορίες desktops / gaming ποντίκια / πληκτρολόγια (η αναζήτηση απαγορεύεται στο robots.txt)"},
+    "kotsovolos":{"label": "Κωτσόβολος","note": "κατηγορίες desktops / gaming ποντίκια / πληκτρολόγια / smartphones (η αναζήτηση απαγορεύεται στο robots.txt)"},
     "import":   {"label": "Εισαγωγή από browser", "note": "τιμές που έστειλες με το bookmarklet από Skroutz / Κωτσόβολο / Public / BestPrice (ισχύουν 24 ώρες)"}
   },
   "prebuilt": {
@@ -62,7 +62,9 @@
       "keyboard": ["https://www.plaisio.gr/list/pc-perifereiaka/perifereiaka-pc/pliktrologia/statusFlags--BlackFriday",
                    "https://www.plaisio.gr/list/pc-perifereiaka/perifereiaka-pc/pliktrologia"],
       "mouse": ["https://www.plaisio.gr/list/pc-perifereiaka/perifereiaka-pc/pontikia-mousepads/statusFlags--BlackFriday",
-                "https://www.plaisio.gr/list/pc-perifereiaka/perifereiaka-pc/pontikia-mousepads"]
+                "https://www.plaisio.gr/list/pc-perifereiaka/perifereiaka-pc/pontikia-mousepads"],
+      "phone": ["https://www.plaisio.gr/list/tilefonia-tablet-wearables/statusFlags--BlackFriday",
+                "https://www.plaisio.gr/list/tilefonia-tablet-wearables/tilefona/smartphones"]
     }
   },
   "peripheral_search_stores": ["eshop", "germanos", "egate", "praxi", "ucase", "tetrabyte", "iabox", "mgmanager", "kpl", "kotsovolos"],
@@ -80,7 +82,8 @@
   "categories": {
     "monitor":  {"label": "Οθόνη", "min_price": 200, "max_price": 1500},
     "keyboard": {"label": "Πληκτρολόγιο", "min_price": 90, "max_price": 500},
-    "mouse":    {"label": "Ποντίκι", "min_price": 50, "max_price": 250}
+    "mouse":    {"label": "Ποντίκι", "min_price": 50, "max_price": 250},
+    "phone":    {"label": "Κινητό", "min_price": 250, "max_price": 1000}
   },
   "alerts": {
     "_help": "ΕΞΑΙΡΕΤΙΚΗ = τουλάχιστον ένας κανόνας (και διαθέσιμο). Το email φεύγει μία φορά ανά προϊόν, ξανά μόνο αν πέσει ≥2% ακόμα.",
@@ -135,7 +138,31 @@
      "tags": {"Λευκό": "white|λευκ", "Esports Green": "green|πράσιν"},
      "review": "Διάδοχος του Viper V3 Pro (Μάρτ. 2026): 49 g, 8 kHz ασύρματα, έως 180 ώρες μπαταρία.",
      "links": {"Razer": "https://www.razer.com/newsroom/product-news/viper-v4-pro-gigantus-v2-pro", "Skroutz": "https://www.skroutz.gr/search?keyphrase=viper+v4+pro",
-               "Amazon.de": "https://www.amazon.de/s?k=Razer+Viper+V4+Pro", "Amazon.it": "https://www.amazon.it/s?k=Razer+Viper+V4+Pro"}}
+               "Amazon.de": "https://www.amazon.de/s?k=Razer+Viper+V4+Pro", "Amazon.it": "https://www.amazon.it/s?k=Razer+Viper+V4+Pro"}},
+    {"key": "poco_x8_pro", "cat": "phone", "label": "Xiaomi Poco X8 Pro 5G (το link σου: 12/512 GB Μαύρο)", "q": "Poco X8 Pro", "include": ["poco x8 pro"], "exclude": ["\\bmax\\b"],
+     "stores": ["eshop", "germanos", "kotsovolos"], "tags": {"512 GB": "512\\s*gb", "256 GB": "256\\s*gb", "128 GB": "128\\s*gb"},
+     "review": "Dimensity 8500, μπαταρία 6.500 mAh, φόρτιση 100 W: το πιο γρήγορο από τα τρία σου για gaming. Κάμερες μέτριες. Skroutz 12/512 από ~483 € (20/11/2026)· οι αλυσίδες το έχουν 500–600 €.",
+     "links": {"Skroutz (το link σου)": "https://www.skroutz.gr/s/66063239/xiaomi-poco-x8-pro-5g-dual-sim-12-512gb-mayro.html", "Skroutz: όλες οι εκδόσεις": "https://www.skroutz.gr/search?keyphrase=Poco+X8+Pro", "BestPrice": "https://www.bestprice.gr/search?q=Poco+X8+Pro", "Public": "https://www.public.gr/search?text=Poco%20X8%20Pro", "GSMArena": "https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName=Poco+X8+Pro"}},
+    {"key": "galaxy_a57", "cat": "phone", "label": "Samsung Galaxy A57 5G (το link σου: 8/128 GB Awesome Navy)", "q": "Galaxy A57", "include": ["galaxy a57"],
+     "stores": ["eshop", "germanos", "kotsovolos"], "tags": {"256 GB": "256\\s*gb", "128 GB": "128\\s*gb", "Enterprise": "enterprise"},
+     "review": "Exynos 1680, IP68, 6 χρόνια ενημερώσεις, καλή οθόνη και λογισμικό. Μέτριο σε gaming και κάμερες, 5.000 mAh, ακριβό στην αρχική τιμή. Skroutz 8/128 από ~365–383 € (20/11/2026).",
+     "links": {"Skroutz (το link σου)": "https://www.skroutz.gr/s/66171346/samsung-galaxy-a57-5g-8-128gb-awesome-navy.html", "Skroutz: όλες οι εκδόσεις": "https://www.skroutz.gr/search?keyphrase=Galaxy+A57", "BestPrice": "https://www.bestprice.gr/search?q=Galaxy+A57", "Public": "https://www.public.gr/search?text=Galaxy%20A57", "GSMArena": "https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName=Galaxy+A57"}},
+    {"key": "edge_70_pro", "cat": "phone", "label": "Motorola Edge 70 Pro 5G (το link σου: 8/256 GB Pantone Titan)", "q": "Edge 70 Pro", "include": ["edge 70 pro"],
+     "stores": ["eshop", "germanos", "kotsovolos"], "tags": {"512 GB": "512\\s*gb", "256 GB": "256\\s*gb", "128 GB": "128\\s*gb"},
+     "review": "Dimensity 8500, καμπυλωτή οθόνη 6,8'' 144 Hz, 6.500 mAh, 90 W. Καλύτερη οθόνη, σχεδίαση και κάμερες από το Poco X8 Pro, λίγο πιο αργό. Skroutz 8/256 από ~453 € (20/11/2026)· οι αλυσίδες έχουν μόνο το 12/512.",
+     "links": {"Skroutz (το link σου)": "https://www.skroutz.gr/s/67455303/motorola-edge-70-pro-5g-8-256gb-pantone-titan.html", "Skroutz: όλες οι εκδόσεις": "https://www.skroutz.gr/search?keyphrase=Motorola+Edge+70+Pro", "BestPrice": "https://www.bestprice.gr/search?q=Motorola+Edge+70+Pro", "Public": "https://www.public.gr/search?text=Motorola%20Edge%2070%20Pro", "GSMArena": "https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName=Motorola+Edge+70+Pro"}},
+    {"key": "xiaomi_17t", "cat": "phone", "label": "ΠΡΟΤΑΣΗ: Xiaomi 17T 5G (12/256 GB)", "q": "Xiaomi 17T", "include": ["\\b17t\\b"], "exclude": ["\\bpro\\b"],
+     "stores": ["eshop", "germanos", "kotsovolos"], "tags": {"512 GB": "512\\s*gb", "256 GB": "256\\s*gb", "128 GB": "128\\s*gb"},
+     "review": "Ίδιο chip με το Poco X8 Pro αλλά με κάμερες Leica και καλύτερη συνολική εικόνα· 67 W, 4 αναβαθμίσεις Android / 6 χρόνια ασφάλειας. Black Friday 549,90 € (από 749,90 €) σε Plaisio / Germanos / Κωτσόβολο.",
+     "links": {"Skroutz: όλες οι εκδόσεις": "https://www.skroutz.gr/search?keyphrase=Xiaomi+17T", "BestPrice": "https://www.bestprice.gr/search?q=Xiaomi+17T", "Public": "https://www.public.gr/search?text=Xiaomi%2017T", "GSMArena": "https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName=Xiaomi+17T"}},
+    {"key": "pixel_10a", "cat": "phone", "label": "ΠΡΟΤΑΣΗ: Google Pixel 10a", "q": "Pixel 10a", "include": ["pixel 10a"],
+     "stores": ["eshop", "germanos", "kotsovolos"], "tags": {"512 GB": "512\\s*gb", "256 GB": "256\\s*gb", "128 GB": "128\\s*gb"},
+     "review": "Η καλύτερη κάμερα στην κατηγορία και 7 χρόνια ενημερώσεις· πιο αργό σε gaming και φόρτιση. Ευρώπη ~430–500 €. Δεν το έχουν e-shop / Germanos / Κωτσόβολος: δες Skroutz.",
+     "links": {"Skroutz: όλες οι εκδόσεις": "https://www.skroutz.gr/search?keyphrase=Pixel+10a", "BestPrice": "https://www.bestprice.gr/search?q=Pixel+10a", "Public": "https://www.public.gr/search?text=Pixel%2010a", "GSMArena": "https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName=Pixel+10a"}},
+    {"key": "poco_x8_pro_max", "cat": "phone", "label": "ΠΡΟΤΑΣΗ: Xiaomi Poco X8 Pro Max 5G (12/512 GB)", "q": "Poco X8 Pro Max", "q_eshop": "Poco X8 Pro", "include": ["poco x8 pro max"],
+     "stores": ["eshop", "germanos", "kotsovolos"], "tags": {"512 GB": "512\\s*gb", "256 GB": "256\\s*gb", "128 GB": "128\\s*gb"},
+     "review": "Το μεγάλο αδελφό του X8 Pro: μπαταρία 8.500 mAh με κορυφαία αυτονομία (GSMArena: από τα καλύτερα mid-range). Χωρίς τηλεφακό. Στην Ελλάδα 606–750 €· αξίζει μόνο αν πέσει κοντά στα 500 €.",
+     "links": {"Skroutz: όλες οι εκδόσεις": "https://www.skroutz.gr/search?keyphrase=Poco+X8+Pro+Max", "BestPrice": "https://www.bestprice.gr/search?q=Poco+X8+Pro+Max", "Public": "https://www.public.gr/search?text=Poco%20X8%20Pro%20Max", "GSMArena": "https://www.gsmarena.com/results.php3?sQuickSearch=yes&sName=Poco+X8+Pro+Max"}}
   ],
   "advice": [
     "Fortnite competitive είναι CPU-bound: ο Ryzen 7 9800X3D (ή 9850X3D/9950X3D) δίνει τα περισσότερα fps. Πάνω από RTX 5070 Ti η κάρτα προσθέτει λίγα fps σε competitive ρυθμίσεις.",
