@@ -46,7 +46,7 @@ jobs:
     timeout-minutes: 45
     environment:
       name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+      url: ${{ steps.deploy.outputs.page_url || steps.deploy2.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -98,5 +98,17 @@ jobs:
         with:
           path: public
 
+      # Το artifact δεν φαίνεται πάντα αμέσως στο API μετά το upload ("No artifacts named
+      # github-pages were found") -> μικρή αναμονή και μία επανάληψη αν αποτύχει το deploy.
+      - run: sleep 15
+
       - id: deploy
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+
+      - if: steps.deploy.outcome == 'failure'
+        run: sleep 45
+
+      - id: deploy2
+        if: steps.deploy.outcome == 'failure'
         uses: actions/deploy-pages@v4
