@@ -13,6 +13,7 @@
     "mgmanager":{"label": "MG Manager", "note": "αναζήτηση (Crawl-delay 5 s, κυρίως εξαρτήματα)"},
     "kpl":      {"label": "KPL",        "note": "sitemap + σελίδες προϊόντων (η αναζήτηση απαγορεύεται στο robots.txt) · Cube builds"},
     "kotsovolos":{"label": "Κωτσόβολος","note": "κατηγορίες desktops / gaming ποντίκια / πληκτρολόγια (η αναζήτηση απαγορεύεται στο robots.txt)"},
+    "amazon":   {"label": "Amazon.de",  "note": "μόνο τα εξαρτήματα του custom build: σελίδα του ίδιου προϊόντος (/dp/), κάθε ώρα από τον τοπικό υπολογιστή (relay)· τιμή χωρίς μεταφορικά"},
     "import":   {"label": "Εισαγωγή από browser", "note": "τιμές που έστειλες με το bookmarklet από Skroutz / Κωτσόβολο / Public / BestPrice (ισχύουν 24 ώρες)"}
   },
   "prebuilt": {
@@ -68,7 +69,7 @@
   "peripheral_search_stores": ["eshop", "germanos", "egate", "praxi", "ucase", "tetrabyte", "iabox", "mgmanager", "kpl", "kotsovolos"],
   "relay": {
     "_help": "Καταστήματα που απαντούν 403 στους servers του GitHub: τα σαρώνει ο τοπικός υπολογιστής (pc_deals.py --relay, Task Scheduler κάθε ώρα) και το GitHub τα ενσωματώνει αν είναι νεότερα από max_age_h ώρες.",
-    "stores": ["plaisio", "ucase", "kotsovolos"],
+    "stores": ["plaisio", "ucase", "kotsovolos", "amazon"],
     "max_age_h": 5
   },
   "global_exclude": [

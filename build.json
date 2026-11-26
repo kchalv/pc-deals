@@ -1,7 +1,7 @@
 {
   "checked": "26/11/2026",
   "title": "Custom build για Fortnite: Ryzen 7 9800X3D + RX 9070 XT 16 GB + 32 GB DDR5",
-  "intro": "Τιμές από Plaisio, Skroutz (χαμηλότερη τιμή) και Amazon.de, όπως ήταν στον τελευταίο χειροκίνητο έλεγχο. Δεν ενημερώνονται αυτόματα (το Skroutz και το Amazon δεν επιτρέπουν αυτόματη ανάγνωση), οπότε έλεγξε την τιμή στο link πριν αγοράσεις. Στο Amazon.de η τελική τιμή για Ελλάδα (ΦΠΑ 24% και μεταφορικά) φαίνεται στο καλάθι.",
+  "intro": "Χειροκίνητες τιμές από Plaisio, Skroutz (χαμηλότερη τιμή) και Amazon.de, όπως ήταν στον τελευταίο χειροκίνητο έλεγχο. Τα προϊόντα του Amazon.de διαβάζονται πλέον αυτόματα κάθε ώρα από τον υπολογιστή σου (στήλη «Αυτόματα σήμερα»)· το Skroutz μπλοκάρει την αυτόματη ανάγνωση, οπότε εκεί έλεγξε την τιμή στο link πριν αγοράσεις. Στο Amazon.de η τελική τιμή για Ελλάδα (ΦΠΑ 24% και μεταφορικά) φαίνεται στο καλάθι.",
   "parts": [
     {
       "part": "Επεξεργαστής",
@@ -37,7 +37,8 @@
           300,
           700
         ],
-        "plaisio": "https://www.plaisio.gr/product/anavathmisi-diktia/anavathmisi-pc/epeksergastes/amd-cpu-ryzen-7-9800x3d-am5-4-dot-7-ghz-96-mb_4666658"
+        "plaisio": "https://www.plaisio.gr/product/anavathmisi-diktia/anavathmisi-pc/epeksergastes/amd-cpu-ryzen-7-9800x3d-am5-4-dot-7-ghz-96-mb_4666658",
+        "amazon": "https://www.amazon.de/dp/B0DKFMSMYK"
       }
     },
     {
@@ -124,7 +125,8 @@
         "range": [
           120,
           350
-        ]
+        ],
+        "amazon": "https://www.amazon.de/dp/B0DQM7H82V"
       }
     },
     {
@@ -172,7 +174,8 @@
         "range": [
           250,
           900
-        ]
+        ],
+        "amazon": "https://www.amazon.de/dp/B0D4NLTM6R"
       }
     },
     {
@@ -289,7 +292,8 @@
         "range": [
           60,
           200
-        ]
+        ],
+        "amazon": "https://www.amazon.de/dp/B0DMTN5WLB"
       }
     },
     {
@@ -313,7 +317,8 @@
         "range": [
           60,
           250
-        ]
+        ],
+        "amazon": "https://www.amazon.de/dp/B0GHYJF25F"
       }
     },
     {
@@ -337,7 +342,8 @@
           8,
           60
         ],
-        "qty": 2
+        "qty": 2,
+        "amazon": "https://www.amazon.de/dp/B0G4JQBL67"
       }
     }
   ],
@@ -448,7 +454,8 @@
     "msystems",
     "egate",
     "ucase",
-    "plaisio"
+    "plaisio",
+    "amazon"
   ],
-  "track_note": "Κάθε ώρα ψάχνω κάθε component στα ελληνικά καταστήματα που διαβάζονται αυτόματα (e-shop, Tetrabyte, MG Manager, msystems, e-gate, U-Case, Plaisio) και κρατάω τη φθηνότερη τιμή του ίδιου προϊόντος. Για Amazon.de και Skroutz δεν επιτρέπεται αυτόματη ανάγνωση, οπότε εκεί κρατιέται η τιμή του build.json (αλλάζει όταν την ενημερώσεις). Η «καλύτερη τιμή» κάθε μέρας είναι η φθηνότερη από τις δύο, και το σύνολο είναι το άθροισμά τους."
+  "track_note": "Κάθε ώρα ψάχνω κάθε component στα ελληνικά καταστήματα που διαβάζονται αυτόματα (e-shop, Tetrabyte, MG Manager, msystems, e-gate, U-Case, Plaisio) και, από τον υπολογιστή σου, τη σελίδα του ίδιου προϊόντος στο Amazon.de (χωρίς μεταφορικά). Κρατάω τη φθηνότερη τιμή του ίδιου προϊόντος. Το Skroutz δεν επιτρέπει αυτόματη ανάγνωση, οπότε εκεί κρατιέται η τιμή του build.json (αλλάζει όταν την ενημερώσεις). Η «καλύτερη τιμή» κάθε μέρας είναι η φθηνότερη από χειροκίνητη και αυτόματη, και το σύνολο είναι το άθροισμά τους."
 }

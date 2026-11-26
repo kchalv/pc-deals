@@ -853,6 +853,7 @@ def relay_scan(wl, push=True):
     pc_raw = [o for o in pc_raw if o["store"] in ok]
     per_raw = [o for o in per_raw if o["store"] in ok]
     build = [o for o in build_track(load_build()) if o["store"] in ONLY_STORES]
+    ok = sorted(set(ok) | {o["store"] for o in build})   # π.χ. amazon: μόνο εξαρτήματα του custom build
     data = {"ts": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "stores": ok, "pc": pc_raw, "per": per_raw, "build": build,
             "fetch": [{"store": s, "url": u, "code": c, "n": n, "note": note} for s, u, c, n, note in FETCH_LOG if s in ok]}
     REPORTS.mkdir(exist_ok=True)
@@ -1252,6 +1253,27 @@ def plaisio_product(url):
             "price": float(pm.group(1)), "stock": "σε απόθεμα" if av and av.group(1) == "InStock" else (av.group(1) if av else "")}
 
 
+def amazon_product(url):
+    """Τιμή από σελίδα προϊόντος Amazon.de (/dp/ – επιτρέπεται στο robots.txt). Μόνο από τον τοπικό υπολογιστή (relay).
+    Χωρίς τιμή στο κουτί αγοράς (π.χ. μόνο άλλοι πωλητές) ή με CAPTCHA -> None (δεν παρακάμπτεται)."""
+    t = get(url, "amazon", delay=2.0)
+    if not t:
+        return None
+    if re.search(r'captcha|/errors/validateCaptcha', t[:20000], re.I) and 'id="productTitle"' not in t:
+        FETCH_LOG.append(("amazon", url, 200, 0, "CAPTCHA – παραλείπεται"))
+        return None
+    pm = re.search(r'(?:apex-pricetopay-value|priceToPay)[^>]*>\s*<span class="a-offscreen">\s*([^<]+)<', t)   # τιμή στο κουτί αγοράς
+    price = parse_price(pm.group(1)) if pm else None
+    if not price:
+        FETCH_LOG.append(("amazon", url, 200, 0, "χωρίς τιμή στο κουτί αγοράς"))
+        return None
+    nm = re.search(r'id="productTitle"[^>]*>([\s\S]*?)</span>', t)
+    av = re.search(r'id="availability"[\s\S]*?<span[^>]*>\s*([^<]+?)\s*<', t)
+    FETCH_LOG.append(("amazon", url, 200, 1, "custom build"))
+    return {"store": "amazon", "name": clean(nm.group(1))[:200] if nm else url, "url": url, "price": price,
+            "stock": clean(av.group(1))[:60] if av else ""}
+
+
 def build_track(b):
     """Τιμές των components του custom build από τα καταστήματα που διαβάζονται αυτόματα.
     Επιστρέφει [{part, store, name, url, price, stock}] (όλες οι αντιστοιχίσεις, όχι μόνο η φθηνότερη)."""
@@ -1270,8 +1292,13 @@ def build_track(b):
             o = plaisio_product(t["plaisio"])
             if o:
                 found.append(o)
+        # Amazon.de μόνο στο relay (ONLY_STORES): οι servers του GitHub δεν το ζητούν ποτέ
+        if "amazon" in stores and t.get("amazon") and ONLY_STORES is not None and want("amazon"):
+            o = amazon_product(t["amazon"])
+            if o and lo <= o["price"] <= hi:
+                found.append(o)
         for sk in stores:
-            if sk == "plaisio" or sk not in SEARCHERS or not want(sk):
+            if sk in ("plaisio", "amazon") or sk not in SEARCHERS or not want(sk) or not t.get("q"):
                 continue
             try:
                 res = SEARCHERS[sk](t["q"])
