@@ -1591,12 +1591,29 @@ function drawBuild() {
       <br><span class="mut">από ${esc(h.first_day.slice(8, 10) + '/' + h.first_day.slice(5, 7))}</span> ${delta(h.now, h.first) || '<span class="mut">ίδια</span>'}
       <br><span class="mut">χαμηλό ${eur(h.min)} · υψηλό ${eur(h.max)}</span></div>`;
   };
-  const autos = p => (p.auto || []).length ? `<div class="small" style="margin-top:3px"><span class="mut">Αυτόματα σήμερα (ελληνικά καταστήματα):</span> `
+  const autos = p => (p.auto || []).length ? `<div class="small" style="margin-top:3px"><span class="mut">Όλες οι αυτόματες σήμερα (ελληνικά καταστήματα):</span> `
     + p.auto.map(a => `<a target="_blank" href="${esc(a.url)}" title="${esc(a.name)}">${esc((D.stores[a.store] || {}).label || a.store)} ${eur(a.price)}</a>`).join(' · ') + '</div>'
     : (p.track ? '<div class="small mut" style="margin-top:3px">Αυτόματα: δεν βρέθηκε σήμερα σε ελληνικό κατάστημα που διαβάζεται αυτόματα.</div>' : '');
+  // χειροκίνητες τιμές (Amazon.de / Skroutz / Plaisio στο build.json): πόσο παλιός είναι ο έλεγχος
+  const [cd, cm, cy] = String(B.checked || '').split('/');
+  const age = cy ? Math.round((new Date(D.today) - new Date(`${cy}-${cm}-${cd}`)) / 864e5) : null;
+  const stale = age != null && age >= 3;
+  const chk = `${esc(B.checked || '')}${age ? ` (πριν ${age} ${age === 1 ? 'μέρα' : 'μέρες'})` : ' (σήμερα)'}`;
+  const manualCell = p => `<div class="price">${eur(p.price)}</div>${p.old ? `<div class="old">${eur(p.old)}</div>` : ''}
+    <div class="small" style="color:${stale ? 'var(--warn)' : 'var(--mut)'}">χειροκίνητη · έλεγχος ${esc((B.checked || '').slice(0, 5))}</div>`;
+  const bestAuto = p => (p.auto || [])[0];
+  const autoCell = p => {
+    const a = bestAuto(p);
+    if (!a) return `<span class="small mut">${p.track ? 'δεν βρέθηκε σήμερα' : 'δεν παρακολουθείται'}</span>`;
+    return `<div class="price"><a target="_blank" href="${esc(a.url)}" title="${esc(a.name)}">${eur(a.price)}</a></div>
+      <div class="small mut">${esc((D.stores[a.store] || {}).label || a.store)}${a.stock ? ' · ' + esc(a.stock) : ''}</div>
+      <div class="small">έναντι χειροκίνητης ${delta(a.price, p.price) || '<span class="mut">ίδια</span>'}</div>`;
+  };
   const rows = B.parts.map(p => `<tr><td><b>${esc(p.part)}</b></td>
-    <td><a target="_blank" href="${esc(p.url)}">${esc(p.name)}</a><div class="notes">${esc(p.why || '')}</div>${p.alts && p.alts.length ? `<div class="small" style="margin-top:3px"><span class="mut">Αλλού:</span> ${alts(p)}</div>` : ''}${autos(p)}</td>
-    <td>${esc(p.store)}</td><td><div class="price">${eur(p.price)}</div>${p.old ? `<div class="old">${eur(p.old)}</div>` : ''}</td><td>${hcell(p)}</td></tr>`).join('');
+    <td><a target="_blank" href="${esc(p.url)}">${esc(p.name)}</a><div class="notes">${esc(p.why || '')}</div>${p.alts && p.alts.length ? `<div class="small" style="margin-top:3px"><span class="mut">Αλλού (έλεγχος ${esc((B.checked || '').slice(0, 5))}):</span> ${alts(p)}</div>` : ''}${autos(p)}</td>
+    <td>${esc(p.store)}</td><td>${manualCell(p)}</td><td>${autoCell(p)}</td><td>${hcell(p)}</td></tr>`).join('');
+  const autoTotal = B.parts.reduce((s, p) => s + (bestAuto(p) ? bestAuto(p).price : p.price), 0);
+  const nAuto = B.parts.filter(bestAuto).length;
   const TS = B.total_series || [], tnow = TS.length ? TS[TS.length - 1][1] : null;
   const tprev = TS.length > 1 ? TS[TS.length - 2][1] : null, tfirst = TS.length ? TS[0][1] : null;
   const tmin = TS.length ? Math.min(...TS.map(x => x[1])) : null;
@@ -1639,9 +1656,12 @@ function drawBuild() {
     <div class="notes">${x.known ? `Ίδιο custom${x.adj.length ? ' με ' + esc(x.adj.join(', ')) : ''}: <b>${eur(x.eq)}</b>` : ''}${x.o.stock ? ' · ' + (x.out ? '<b style="color:var(--bad)">' + esc(x.o.stock) + '</b>' : esc(x.o.stock)) : ''}</div></div>`).join('');
   const sameSec = `<div class="grp"><h3>Έτοιμα PC στην ίδια τιμή (ζωντανά από τη σάρωση)</h3><div class="small mut" style="margin-bottom:6px">${esc(B.compare_note || '')}</div>
     ${same.length ? `<div class="cards">${sameCards}</div>` : '<p class="mut">Κανένα αντίστοιχο έτοιμο PC σε αυτό το εύρος τιμής σήμερα.</p>'}</div>`;
-  return `<div class="box"><h3 style="margin:0 0 4px">${esc(B.title)}</h3><div class="small mut">${esc(B.intro)} Έλεγχος τιμών: <b>${esc(B.checked)}</b>.</div></div>
-  <table class="tbl"><tr><th>Εξάρτημα</th><th>Προϊόν</th><th>Κατάστημα</th><th>Τιμή</th><th>Ιστορικό (καλύτερη τιμή/μέρα)</th></tr>${rows}
-  <tr><td colspan="3" style="text-align:right"><b>Σύνολο</b></td><td><div class="price" style="font-size:18px">${eur(total)}</div></td><td>${totalHist}</td></tr></table>
+  return `<div class="box"><h3 style="margin:0 0 4px">${esc(B.title)}</h3><div class="small mut">${esc(B.intro)} Χειροκίνητος έλεγχος τιμών: <b>${chk}</b>.
+    Η στήλη «Αυτόματα σήμερα» ενημερώνεται κάθε ώρα από τα ελληνικά καταστήματα.</div>
+    ${stale ? `<div class="small" style="margin-top:4px;color:var(--warn)"><b>Οι χειροκίνητες τιμές (Amazon.de / Skroutz) είναι ${age} ημερών</b>: δεν ενημερώνονται μόνες τους, έλεγξέ τες στο link πριν αγοράσεις.</div>` : ''}</div>
+  <table class="tbl"><tr><th>Εξάρτημα</th><th>Προϊόν</th><th>Κατάστημα</th><th>Χειροκίνητη τιμή</th><th>Αυτόματα σήμερα</th><th>Ιστορικό (καλύτερη τιμή/μέρα)</th></tr>${rows}
+  <tr><td colspan="3" style="text-align:right"><b>Σύνολο</b></td><td><div class="price" style="font-size:18px">${eur(total)}</div><div class="small mut">χειροκίνητες τιμές</div></td>
+    <td><div class="price" style="font-size:18px">${eur(autoTotal)}</div><div class="small mut">αυτόματες σήμερα (${nAuto}/${B.parts.length})· για τα υπόλοιπα η χειροκίνητη</div></td><td>${totalHist}</td></tr></table>
   <div class="small mut" style="margin-top:4px">${esc(B.track_note || '')}</div>
   ${histTable}
   ${sameSec}

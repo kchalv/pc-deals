@@ -1,19 +1,19 @@
 {
-  "checked": "18/11/2026",
+  "checked": "26/11/2026",
   "title": "Custom build για Fortnite: Ryzen 7 9800X3D + RX 9070 XT 16 GB + 32 GB DDR5",
-  "intro": "Τιμές από Plaisio, Skroutz (χαμηλότερη τιμή) και Amazon.de, όπως ήταν στις 18/11/2026. Δεν ενημερώνονται αυτόματα (το Skroutz και το Amazon δεν επιτρέπουν αυτόματη ανάγνωση), οπότε έλεγξε την τιμή στο link πριν αγοράσεις. Στο Amazon.de η τελική τιμή για Ελλάδα (ΦΠΑ 24% και μεταφορικά) φαίνεται στο καλάθι.",
+  "intro": "Τιμές από Plaisio, Skroutz (χαμηλότερη τιμή) και Amazon.de, όπως ήταν στον τελευταίο χειροκίνητο έλεγχο. Δεν ενημερώνονται αυτόματα (το Skroutz και το Amazon δεν επιτρέπουν αυτόματη ανάγνωση), οπότε έλεγξε την τιμή στο link πριν αγοράσεις. Στο Amazon.de η τελική τιμή για Ελλάδα (ΦΠΑ 24% και μεταφορικά) φαίνεται στο καλάθι.",
   "parts": [
     {
       "part": "Επεξεργαστής",
       "name": "AMD Ryzen 7 9800X3D (box)",
       "store": "Amazon.de",
-      "price": 382.42,
+      "price": 382.07,
       "url": "https://www.amazon.de/dp/B0DKFMSMYK",
       "why": "Ο πιο γρήγορος επεξεργαστής για Fortnite (3D V-Cache). Τον πουλάει απευθείας το Amazon, φθηνότερα από Skroutz και Plaisio.",
       "alts": [
         [
           "Skroutz",
-          394.73,
+          388.7,
           "https://www.skroutz.gr/s/58448602/AMD-Ryzen-7-9800X3D-4-7GHz-Epexergastis-8-Pyrinon-gia-Socket-AM5-Tray.html"
         ],
         [
@@ -51,17 +51,17 @@
       "alts": [
         [
           "Skroutz (ASRock Challenger)",
-          938.99,
+          1016.13,
           "https://www.skroutz.gr/s/64224661/p.html"
         ],
         [
           "Skroutz (Sapphire Pulse)",
-          999.79,
+          1010.1,
           "https://www.skroutz.gr/s/59201716/p.html"
         ],
         [
           "Amazon.de (Gigabyte Gaming OC)",
-          1012.83,
+          1030.55,
           "https://www.amazon.de/dp/B0DT7B79K9"
         ]
       ],
@@ -92,17 +92,17 @@
       "alts": [
         [
           "Amazon.de (μαύρη)",
-          168.23,
+          177.03,
           "https://www.amazon.de/dp/B0DQM8GPR7"
         ],
         [
           "Amazon.de (Asus TUF B850-Plus WiFi)",
-          161.5,
+          166.62,
           "https://www.amazon.de/dp/B0DP5DQPRC"
         ],
         [
           "Skroutz (Gigabyte, μαύρη)",
-          208.9,
+          207.85,
           "https://www.skroutz.gr/s/58239538/p.html"
         ],
         [
@@ -142,7 +142,7 @@
         ],
         [
           "Skroutz (χωρίς RGB)",
-          535.9,
+          508.79,
           "https://www.skroutz.gr/s/48887375/p.html"
         ],
         [
@@ -186,7 +186,7 @@
       "alts": [
         [
           "Skroutz (Kingston NV3 2 TB)",
-          259.32,
+          266.49,
           "https://www.skroutz.gr/s/55365010/p.html"
         ],
         [
@@ -196,7 +196,7 @@
         ],
         [
           "Skroutz (WD SN7100 2 TB)",
-          360.63,
+          397.11,
           "https://www.skroutz.gr/s/58383162/p.html"
         ]
       ],
@@ -222,13 +222,13 @@
       "part": "Ψύξη CPU",
       "name": "Arctic Liquid Freezer III Pro 360 A-RGB",
       "store": "Skroutz",
-      "price": 84.65,
+      "price": 86.73,
       "url": "https://www.skroutz.gr/s/59894502/p.html",
       "why": "Από τις καλύτερες υδροψύξεις 360 mm σε σχέση με την τιμή, με A-RGB ανεμιστήρες για το γυάλινο κουτί.",
       "alts": [
         [
           "Skroutz (χωρίς RGB)",
-          73.9,
+          73.8,
           "https://www.skroutz.gr/s/59894538/p.html"
         ],
         [
@@ -238,7 +238,7 @@
         ],
         [
           "Amazon.de (αερόψυξη Peerless Assassin 120 SE ARGB)",
-          34.79,
+          29.57,
           "https://www.amazon.de/dp/B09NSCCYHH"
         ]
       ],
@@ -262,7 +262,7 @@
       "part": "Τροφοδοτικό",
       "name": "Corsair RM850e (2025) 850W Gold, ATX 3.1",
       "store": "Amazon.de",
-      "price": 86.48,
+      "price": 86.38,
       "url": "https://www.amazon.de/dp/B0DMTN5WLB",
       "why": "Αρθρωτό, αθόρυβο, με καλώδιο 12V-2x6, οπότε σηκώνει και μελλοντική αναβάθμιση κάρτας. 850W αφήνουν άνετο περιθώριο.",
       "alts": [
@@ -273,7 +273,7 @@
         ],
         [
           "Skroutz (be quiet! Pure Power 12 850W)",
-          70.0,
+          91.75,
           "https://www.skroutz.gr/s/57376082/p.html"
         ]
       ],
@@ -320,7 +320,7 @@
       "part": "Ανεμιστήρες",
       "name": "2× Thermalright TL-C12C-S X3 ARGB (6 ανεμιστήρες 120 mm)",
       "store": "Amazon.de",
-      "price": 26.24,
+      "price": 22.3,
       "url": "https://www.amazon.de/dp/B0G4JQBL67",
       "why": "Στο κάτω μέρος και στο πλάι, ενώ το ψυγείο 360 mm μπαίνει πάνω. 13,12 € το πακέτο των 3.",
       "alts": [],
@@ -344,7 +344,7 @@
   "options": [
     {
       "label": "Ryzen 7 7800X3D αντί για 9800X3D",
-      "delta": -94.26,
+      "delta": -93.91,
       "price_note": "Amazon.de 288,16 € · Skroutz 287,90 € · Plaisio 359 €",
       "url": "https://www.amazon.de/dp/B0BTZB7F88",
       "note": "Περίπου 8–12% πιο αργός σε Fortnite με χαμηλές ρυθμίσεις και πολλά fps (εκεί μετράει ο επεξεργαστής). Σε 1440p με υψηλές ρυθμίσεις η διαφορά σχεδόν χάνεται. Είναι η value επιλογή αν θες να γλιτώσεις περίπου 95 €.",
@@ -368,8 +368,8 @@
     },
     {
       "label": "Αερόψυξη αντί για υδρόψυξη",
-      "delta": -49.86,
-      "price_note": "Thermalright Peerless Assassin 120 SE ARGB · Amazon.de 34,79 €",
+      "delta": -57.16,
+      "price_note": "Thermalright Peerless Assassin 120 SE ARGB · Amazon.de 29,57 €",
       "url": "https://www.amazon.de/dp/B09NSCCYHH",
       "note": "Ο 9800X3D ψύχεται άνετα και με αυτήν. Η υδρόψυξη μπαίνει κυρίως για την εμφάνιση στο γυάλινο κουτί.",
       "key": "air"
