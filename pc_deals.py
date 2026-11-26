@@ -543,7 +543,7 @@ def kpl_search(q, max_pages=1):
 
 # ---------------------------------------------------------------- Κωτσόβολος (μόνο κατηγορίες· η αναζήτηση απαγορεύεται στο robots.txt)
 KOTS_API = "https://www.kotsovolos.gr/api/ext/getProductsByCategory"   # robots.txt: Allow: /api/ext/getProductsByCategory*
-KOTS_CATS = {"35750": "desktops", "35519": "gaming-mice", "35520": "gaming-keyboards", "35261": "smartphones"}
+KOTS_CATS = {"35750": "desktops", "35519": "gaming-mice", "35520": "gaming-keyboards"}
 KOTS_STOCK = {"1": "Άμεσα διαθέσιμο", "2": "Διαθέσιμο", "3": "Κατόπιν παραγγελίας", "4": "Μη διαθέσιμο"}
 _GREEK_LOOKALIKE = str.maketrans("ΑΒΕΖΗΙΚΜΝΟΡΤΥΧαβεικνορτυχ", "ABEZHIKMNOPTYXaBeikvopTyx")
 
@@ -564,19 +564,15 @@ def _kots_attr(e, *names):
 def kotsovolos_search(q="", max_pages=1):
     """Διαβάζει τις κατηγορίες desktops / gaming ποντίκια / gaming πληκτρολόγια (200 ανά κλήση, cache ανά σάρωση)
     και φιλτράρει με τις λέξεις του q (κενό q = όλα). Στα PC προσθέτει CPU / GPU / VRAM / RAM στο όνομα."""
-    toks, out, seen, short = _kots_norm(q).split(), [], set(), {}
-    for cat_id, page in ((c, pg) for c in KOTS_CATS for pg in range(1, 6)):   # έως 5 × 200 ανά κατηγορία (τα smartphones είναι ~500)
-        if page > 1 and short.get(cat_id):
-            continue
-        url = KOTS_API + "?" + urllib.parse.urlencode({"params": f"pageNumber={page}&pageSize=200", "catId": cat_id, "storeId": "10151", "isCPage": "false"})
+    toks, out, seen = _kots_norm(q).split(), [], set()
+    for cat_id in KOTS_CATS:
+        url = KOTS_API + "?" + urllib.parse.urlencode({"params": "pageNumber=1&pageSize=200", "catId": cat_id, "storeId": "10151", "isCPage": "false"})
         t = get(url, "kotsovolos")
         try:
             entries = (json.loads(t) if t else {}).get("catalogEntryView") or []
         except ValueError:
             FETCH_LOG.append(("kotsovolos", url, 200, 0, "bad JSON"))
-            short[cat_id] = True
             continue
-        short[cat_id] = len(entries) < 200   # τελευταία σελίδα
         n = 0
         for e in entries:
             name = e.get("name") or ""
@@ -806,7 +802,7 @@ def fetch_raw(wl):
                         seen.add(o["url"])
                         per_raw.append(dict(o, _cat=cat_key))
     for t in wl["targets"]:
-        for sk in t.get("stores") or wl["peripheral_search_stores"]:   # "stores" στον στόχο: μόνο αυτά τα καταστήματα (π.χ. κινητά)
+        for sk in wl["peripheral_search_stores"]:
             if want(sk):
                 per_raw += [dict(o, _t=t["key"]) for o in SEARCHERS[sk](t.get("q_" + sk) or t["q"])]
     return pc_raw, per_raw
@@ -1477,7 +1473,7 @@ function dealKey(o) { // μικρότερο = καλύτερη προσφορά
 }
 
 // ---------------------------------------------------------------- tabs
-const TABS = [['pc', 'Έτοιμα PC'], ['build', 'Custom build (εξαρτήματα)'], ['per', 'Ποντίκι · Πληκτρολόγιο · Οθόνη'], ['phone', 'Κινητά'], ['top', 'Κορυφαίες προσφορές'], ['info', 'Οδηγός & καταστήματα']];
+const TABS = [['pc', 'Έτοιμα PC'], ['build', 'Custom build (εξαρτήματα)'], ['per', 'Ποντίκι · Πληκτρολόγιο · Οθόνη'], ['top', 'Κορυφαίες προσφορές'], ['info', 'Οδηγός & καταστήματα']];
 function drawTabs() {
   $('#tabs').innerHTML = TABS.map(([k, l]) => `<span class="tab ${st.tab === k ? 'on' : ''}" data-k="${k}">${l}</span>`).join('');
   document.querySelectorAll('.tab').forEach(t => t.onclick = () => { st.tab = t.dataset.k; ls('tab', st.tab); draw(); });
@@ -1486,7 +1482,7 @@ function summary() {
   const pcs = D.offers.filter(o => o.cat === 'prebuilt'), per = D.offers.filter(o => o.cat !== 'prebuilt');
   const exc = D.offers.filter(o => o.excellent).length;
   const bfDays = D.bf.date ? Math.ceil((new Date(D.bf.date) - new Date(D.today)) / 864e5) : null;
-  return `<div class="box"><b>${pcs.length}</b> έτοιμα PC (9800X3D / 7800X3D / 270K Plus / 14900K · ≥ 32 GB RAM · ≥ 16 GB VRAM) · <b>${per.length}</b> προσφορές περιφερειακών / κινητών · <b>${exc}</b> εξαιρετικές ·
+  return `<div class="box"><b>${pcs.length}</b> έτοιμα PC (9800X3D / 7800X3D / 270K Plus / 14900K · ≥ 32 GB RAM · ≥ 16 GB VRAM) · <b>${per.length}</b> προσφορές περιφερειακών · <b>${exc}</b> εξαιρετικές ·
   ενημέρωση ${esc(D.generated)}${bfDays != null && bfDays >= 0 ? ` · Black Friday σε <b>${bfDays}</b> μέρες (${esc(D.bf.label || '')})` : ''}
   <div class="small mut" style="margin-top:4px">Email: ${D.email.ready ? 'ενεργό προς ' + esc(D.email.to) : '<b style="color:var(--warn)">δεν έχει ρυθμιστεί κωδικός SMTP (notify.json)</b>'} · ${esc(D.email.msg || '')}
   ${D.first_run ? ' · <b>Πρώτη μέρα ιστορικού</b>: ΝΕΟ / ιστορικό χαμηλό / ψεύτικη έκπτωση γεμίζουν όσο μαζεύονται τιμές.' : ''}</div></div>`;
@@ -1539,9 +1535,9 @@ function drawPC() {
 }
 
 // ---------------------------------------------------------------- περιφερειακά
-function drawPer(cats) {
+function drawPer() {
   let html = summary();
-  for (const cat of cats) {
+  for (const cat of ['monitor', 'keyboard', 'mouse']) {
     html += `<div class="grp"><h3>${esc(D.cats[cat])}</h3>`;
     for (const t of D.targets.filter(t => t.cat === cat)) {
       const list = D.offers.filter(o => o.target === t.key).sort((a, b) => a.price - b.price);
@@ -1575,7 +1571,7 @@ function drawTop() {
     + sec('Καλύτερη αξία για Fortnite + AI', best(o => true, (a, b) => b.score.value - a.score.value), pcx)
     + sec('Καλύτερο για local LLM (περισσότερη VRAM)', best(o => (o.spec.vram || 0) >= 24, (a, b) => a.price - b.price), pcx)
     + sec('Φθηνότερο σοβαρό PC για Fortnite (X3D)', best(o => o.spec.x3d, (a, b) => a.price - b.price), pcx)
-    + sec('Περιφερειακά & κινητά: χαμηλότερη τιμή ανά μοντέλο', D.targets.map(t => D.offers.filter(o => o.target === t.key).sort((a, b) => a.price - b.price)[0]).filter(Boolean), o => (tlabel[o.target] || {}).label);
+    + sec('Περιφερειακά: χαμηλότερη τιμή ανά μοντέλο', D.targets.map(t => D.offers.filter(o => o.target === t.key).sort((a, b) => a.price - b.price)[0]).filter(Boolean), o => (tlabel[o.target] || {}).label);
 }
 
 // ---------------------------------------------------------------- custom build
@@ -1669,7 +1665,7 @@ function drawInfo() {
 function draw() {
   drawTabs();
   const v = $('#view');
-  v.innerHTML = st.tab === 'pc' ? drawPC() : st.tab === 'build' ? drawBuild() : st.tab === 'per' ? drawPer(Object.keys(D.cats).filter(c => c !== 'phone')) : st.tab === 'phone' ? drawPer(['phone']) : st.tab === 'top' ? drawTop() : drawInfo();
+  v.innerHTML = st.tab === 'pc' ? drawPC() : st.tab === 'build' ? drawBuild() : st.tab === 'per' ? drawPer() : st.tab === 'top' ? drawTop() : drawInfo();
   if (st.tab === 'pc') {
     $('#pcf').value = st.pcf; $('#sort').value = st.sort; $('#store').value = st.store;
     $('#pcf').onchange = e => { st.pcf = e.target.value; ls('pcf', st.pcf); draw(); };

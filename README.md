@@ -30,7 +30,6 @@
   - οθόνες: AW2725DF, PG27AQDP/AQWP, LG 27GX790A, LG 27GR83Q
   - πληκτρολόγιο: **μόνο SteelSeries Apex Pro TKL Gen 3** (ενσύρματο ή Wireless, όχι full-size / Mini / Gen 2)
   - ποντίκια: **μόνο Logitech G Pro X2 Superstrike, Logitech G Pro X3 Superstrike, Razer Viper V4 Pro** Κάθε μοντέλο έχει σύντομη κριτική και link σε RTINGS.
-- **Κινητά** σε ξεχωριστή καρτέλα (`watchlist.json` → `targets` με `"cat": "phone"`): Poco X8 Pro, Galaxy A57, Motorola Edge 70 Pro και προτάσεις στην ίδια τιμή (Xiaomi 17T, Pixel 10a, Poco X8 Pro Max). Διαβάζονται από e-shop, Germanos, Κωτσόβολο (κατηγορία smartphones) και Plaisio (λίστα smartphones + Black Friday)· Skroutz / Public / BestPrice μόνο με links ή bookmarklet. Το πεδίο `stores` ενός στόχου περιορίζει σε ποια καταστήματα γίνεται η αναζήτηση.
 - **Ιστορικό τιμών** (SQLite `history.sqlite`, ημερήσιο min): 30ήμερο χαμηλό, διάμεση, ιστορικό χαμηλό, γράφημα.
 - **Έλεγχος έκπτωσης**: «ψεύτικη έκπτωση» όταν η τιμή ήταν ίδια ή χαμηλότερη μέσα σε 30 μέρες, ή είναι πάνω από την «ελάχιστη τιμή 30 ημερών» που δείχνει το κατάστημα (Omnibus). «Πραγματική έκπτωση» όταν επιβεβαιώνεται.
 - **Κριτικές**: αστέρια και αριθμός κριτικών από Plaisio, e-gate, Praxi και την εισαγωγή από browser. Links σε Skroutz, BestPrice (ιστορικό τιμής & κριτικές) και YouTube review για κάθε προϊόν.
@@ -54,8 +53,8 @@
 | i-aBox | κατάλογος + έτοιμα PC (κάθε παραλλαγή CPU/GPU/RAM με την τιμή της, από JSON-LD) |
 | MG Manager | αναζήτηση (Crawl-delay 5 s) |
 | KPL | sitemap.xml + σελίδες προϊόντων (η αναζήτηση απαγορεύεται στο robots.txt) |
-| Κωτσόβολος | κατηγορίες desktops / gaming ποντίκια / πληκτρολόγια / smartphones μέσω `getProductsByCategory` (επιτρέπεται ρητά στο robots.txt· η αναζήτηση όχι) |
-| Germanos | περιφερειακά και κινητά |
+| Κωτσόβολος | κατηγορίες desktops / gaming ποντίκια / πληκτρολόγια μέσω `getProductsByCategory` (επιτρέπεται ρητά στο robots.txt· η αναζήτηση όχι) |
+| Germanos | μόνο περιφερειακά |
 
 Τα περιφερειακά αναζητούνται σε όλα τα παραπάνω. Ο κώδικας **δεν** παρακάμπτει προστασίες και σέβεται το robots.txt. Γι' αυτό:
 
